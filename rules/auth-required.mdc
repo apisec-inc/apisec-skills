@@ -1,0 +1,27 @@
+---
+description: "Enforces authentication middleware on all API route handlers. Applies to Express, FastAPI, Django, Spring, Go Gin."
+alwaysApply: true
+globs:
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.java"
+---
+
+## API authentication rule
+
+Every route handler that reads, modifies, or deletes data MUST include authentication middleware or a decorator before the handler executes.
+
+Never generate a data-touching endpoint without auth. If auth middleware is not yet defined in the codebase, note that it needs to be added and generate a placeholder that fails safely (401) until implemented.
+
+Patterns that indicate missing auth — flag these:
+- Express route with no middleware before the handler function
+- FastAPI endpoint with no Depends(get_current_user) or equivalent
+- Django view with no @login_required or IsAuthenticated permission class
+- Spring endpoint with no @PreAuthorize or SecurityConfig coverage
+- Go handler registered without auth middleware in the route group
+
+When you detect missing auth, do not silently generate the insecure code. Output:
+⚠️  Auth missing — add authentication before generating this endpoint.
+Suggested fix: [framework-appropriate auth middleware pattern]

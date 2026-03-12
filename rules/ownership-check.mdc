@@ -1,0 +1,24 @@
+---
+description: "Requires ownership validation on any endpoint that accesses database records by user-supplied ID. Prevents BOLA/IDOR vulnerabilities."
+alwaysApply: true
+globs:
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.java"
+---
+
+## Ownership check rule
+
+Any endpoint that retrieves, updates, or deletes a record using a user-supplied ID must include an ownership filter in the database query — not after fetching.
+
+Never generate findById, findOne, findUnique, or equivalent without scoping the query to the authenticated user's ID.
+
+Insecure pattern to refuse:
+  Order.findById(req.params.id)
+
+Safe pattern to generate instead:
+  Order.findOne({ _id: req.params.id, userId: req.user.id })
+
+This applies to all frameworks and ORMs. If the authenticated user ID is not available in context, flag that auth is missing first.

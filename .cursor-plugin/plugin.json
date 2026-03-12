@@ -1,0 +1,24 @@
+{
+  "name": "apisec",
+  "displayName": "APIsec — API Security for AI Coding Agents",
+  "description": "Embed API security intelligence directly into your coding workflow. Detects BOLA, BFLA, injection risks, auth gaps, and OWASP API Top 10 vulnerabilities as you write code.",
+  "version": "1.0.0",
+  "author": "APIsec",
+  "homepage": "https://apisec.ai",
+  "logo": "./logo.png",
+  "skills": [
+    { "path": "skills/bola-detector" },
+    { "path": "skills/auth-rbac-scaffold" },
+    { "path": "skills/injection-checker" },
+    { "path": "skills/security-test-generator" },
+    { "path": "skills/api-security-review" },
+    { "path": "skills/openapi-hardener" }
+  ],
+  "rules": [
+    { "path": "rules/auth-required.mdc" },
+    { "path": "rules/ownership-check.mdc" },
+    { "path": "rules/input-validation.mdc" },
+    { "path": "rules/error-sanitization.mdc" },
+    { "path": "rules/admin-rbac.mdc" }
+  ]
+}

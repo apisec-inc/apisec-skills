@@ -1,0 +1,24 @@
+---
+description: "Prevents leaking internal error details, stack traces, or database error messages in API responses."
+alwaysApply: true
+globs:
+  - "**/*.js"
+  - "**/*.ts"
+  - "**/*.py"
+  - "**/*.go"
+  - "**/*.java"
+---
+
+## Error sanitization rule
+
+API error responses must never include stack traces, internal field names, database error messages, ORM errors, or any internal system detail.
+
+Never generate error handlers that return err.message, error.stack, or raw exception objects directly to the client.
+
+Insecure pattern to refuse:
+  res.status(500).json({ error: err.message })
+
+Safe pattern to generate instead:
+  res.status(500).json({ error: 'Internal server error', requestId: req.id })
+
+Always generate a generic user-facing message plus a unique request/correlation ID for internal tracing. The requestId allows ops teams to find the real error in logs without exposing it to clients.
