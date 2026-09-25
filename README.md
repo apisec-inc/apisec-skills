@@ -237,14 +237,6 @@ The current release is Phase 1: skills and rules. Phase 2 will add a live MCP se
 
 ---
 
-## About APIsec
-
-[APIsec](https://apisec.ai) is the API security testing platform trusted by Fortune 500 enterprises. We automate continuous API security testing across the full SDLC, from development through production.
-
-APIsec Skills bring that security intelligence directly into the developer's coding environment, shifting security left to the point where code is written. What the skills catch while code is being written, the APIsec platform proves by execution against the running application.
-
----
-
 ## License
 
 MIT. Free to use, modify, and distribute.
