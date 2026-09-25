@@ -43,7 +43,7 @@ Same eight words typed. Completely different output.
 
 ### 5 Security Rules (always active)
 
-Rules sit in the agent's system context from the start of the session and shape every code generation. No commands are needed. The Cursor versions live in `rules/` as `.mdc` files; generated equivalents for every other agent live under `agents/` (see [Installation](#installation)).
+Rules sit in the agent's system context from the start of the session and shape every code generation. No commands are needed. The rule sources live in `rules/`, and ready-to-copy versions in each agent's native format live under `agents/` (see [Installation](#installation)).
 
 | Rule | What It Enforces |
 |------|-----------------|
@@ -101,7 +101,7 @@ mkdir -p .claude/rules && cp agents/claude-code/rules/*.md .claude/rules/
 cp -r skills .cursor/skills/
 cp -r rules  .cursor/rules/
 ```
-The repository also carries a `.cursor-plugin/plugin.json` manifest for the Cursor plugin format.
+A `.cursor-plugin/plugin.json` manifest is included for the Cursor plugin format.
 
 ### GitHub Copilot
 
@@ -138,7 +138,7 @@ cp -r skills .agents/skills/
 ```
 For the rules, use whichever project instruction file your agent reads (`AGENTS.md` is the most common) and paste in `agents/codex/AGENTS.md`.
 
-> **One repository, every major coding agent.** The skills need no modification between tools. The rules are generated from the same five sources by `scripts/build-agent-rules.py`, so every agent gets identical guidance.
+> **One repository, every major coding agent.** The skills need no modification between tools, and the rules are generated from one set of sources by `scripts/build-agent-rules.py`, so every agent gets identical guidance.
 
 ---
 
@@ -208,7 +208,7 @@ Powered by APIsec · apisec.ai
 
 ```
 skills/                      six Agent Skills (SKILL.md each), portable to every agent
-rules/                       five Cursor rules (.mdc), the source of truth for the rules
+rules/                       five rule sources (.mdc), generated into every agent's format
 agents/
   claude-code/rules/         generated: Claude Code .claude/rules/ files
   windsurf/rules/            generated: Windsurf .windsurf/rules/ files
