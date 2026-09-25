@@ -1,14 +1,8 @@
 ---
-description: "Requires validation of all user-supplied input before use. Prevents injection, unexpected types, and missing required fields."
-alwaysApply: true
-globs:
-  - "**/*.js"
-  - "**/*.ts"
-  - "**/*.py"
-  - "**/*.go"
-  - "**/*.java"
+trigger: always_on
+description: Requires validation of all user-supplied input before use. Prevents injection, unexpected types, and missing required fields.
 ---
-
+<!-- Generated from rules/*.mdc by scripts/build-agent-rules.py. Edit the .mdc sources, not this file. -->
 ## Input validation rule
 
 All user-supplied input (path params, query params, request body, headers) must pass through a validation layer before being used in any logic, query, or response.

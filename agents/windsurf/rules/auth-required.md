@@ -1,14 +1,8 @@
 ---
-description: "Enforces authentication middleware on all API route handlers. Applies to Express, FastAPI, Django, Spring, Go Gin."
-alwaysApply: true
-globs:
-  - "**/*.js"
-  - "**/*.ts"
-  - "**/*.py"
-  - "**/*.go"
-  - "**/*.java"
+trigger: always_on
+description: Enforces authentication middleware on all API route handlers. Applies to Express, FastAPI, Django, Spring, Go Gin.
 ---
-
+<!-- Generated from rules/*.mdc by scripts/build-agent-rules.py. Edit the .mdc sources, not this file. -->
 ## API authentication rule
 
 Every route handler that reads, modifies, or deletes data MUST include authentication middleware or a decorator before the handler executes.

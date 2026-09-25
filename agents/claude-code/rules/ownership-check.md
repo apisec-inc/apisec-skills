@@ -1,14 +1,4 @@
----
-description: "Requires ownership validation on any endpoint that accesses database records by user-supplied ID. Prevents BOLA/IDOR vulnerabilities."
-alwaysApply: true
-globs:
-  - "**/*.js"
-  - "**/*.ts"
-  - "**/*.py"
-  - "**/*.go"
-  - "**/*.java"
----
-
+<!-- Generated from rules/*.mdc by scripts/build-agent-rules.py. Edit the .mdc sources, not this file. -->
 ## Ownership check rule
 
 Any endpoint that retrieves, updates, or deletes a record using a user-supplied ID must include an ownership filter in the database query itself, not after fetching.

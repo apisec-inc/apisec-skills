@@ -1,9 +1,9 @@
-# APIsec — API Security for AI Coding Agents
+# APIsec Skills: API Security for AI Coding Agents
 
-> Embed OWASP API Security Top 10 intelligence directly into your coding workflow. Every endpoint your AI generates is secure by default — no configuration, no API keys, no friction.
+> Put OWASP API Security Top 10 intelligence inside your coding agent. Every endpoint the agent generates is secure by default, with nothing to configure, no API keys, and nothing leaving your machine.
 
-[![Cursor Marketplace](https://img.shields.io/badge/Cursor-Marketplace-blue)](https://cursor.com/marketplace)
-[![Compatible](https://img.shields.io/badge/Compatible-Claude%20Code%20%7C%20Codex%20%7C%20Copilot%20%7C%20Gemini%20%7C%20Replit-green)](#installation)
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-open%20format-blue)](https://agentskills.io)
+[![Compatible](https://img.shields.io/badge/Works%20with-Cursor%20%7C%20Claude%20Code%20%7C%20Copilot%20%7C%20Codex%20%7C%20Gemini%20%7C%20Windsurf-green)](#installation)
 [![OWASP](https://img.shields.io/badge/OWASP-API%20Top%2010%202023-red)](https://owasp.org/API-Security)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
@@ -11,11 +11,11 @@
 
 ## What It Does
 
-When you ask Cursor's AI to write an API endpoint, it normally generates the most direct answer. Without any security context, that often means no authentication checks, no ownership filters, no input validation.
+Ask your coding agent to "add an endpoint to fetch orders by id". Without security context it returns the most direct answer, which usually means no authentication check, no ownership filter, and no input validation.
 
-This plugin embeds APIsec's security rules and skills into Cursor's AI context. The same prompt produces hardened output — silently, automatically, every time.
+APIsec Skills embed security rules and skills into the agent's context. The same prompt produces hardened output, silently and automatically, every time.
 
-**Without the plugin:**
+**Without APIsec Skills:**
 ```js
 app.get('/api/orders/:id', async (req, res) => {
   const order = await Order.findById(req.params.id); // any user, any order
@@ -23,7 +23,7 @@ app.get('/api/orders/:id', async (req, res) => {
 });
 ```
 
-**With the plugin:**
+**With APIsec Skills:**
 ```js
 app.get('/api/orders/:id', authenticate, async (req, res) => {
   const order = await Order.findOne({
@@ -35,7 +35,7 @@ app.get('/api/orders/:id', authenticate, async (req, res) => {
 });
 ```
 
-Same 8 words typed. Completely different output.
+Same eight words typed. Completely different output.
 
 ---
 
@@ -43,7 +43,7 @@ Same 8 words typed. Completely different output.
 
 ### 5 Security Rules (always active)
 
-Rules are injected into the AI's system prompt at session start. They fire silently on every code generation — no commands needed.
+Rules sit in the agent's system context from the start of the session and shape every code generation. No commands are needed. The Cursor versions live in `rules/` as `.mdc` files; generated equivalents for every other agent live under `agents/` (see [Installation](#installation)).
 
 | Rule | What It Enforces |
 |------|-----------------|
@@ -55,14 +55,14 @@ Rules are injected into the AI's system prompt at session start. They fire silen
 
 ### 6 Security Skills (on-demand)
 
-Skills load automatically when the AI detects a relevant task. Each produces a structured security report with OWASP references and actionable fixes.
+Skills load automatically when the agent detects a relevant task. Each produces a structured security report with OWASP references and actionable fixes.
 
 | Skill | Triggers On | OWASP Coverage |
 |-------|------------|----------------|
 | `bola-detector` | Route handlers with `:id` params, `findById`, `findUnique`, `findOne` | API1:2023 |
 | `auth-rbac-scaffold` | JWT, middleware, login flows, role checks, permissions | API2:2023, API5:2023 |
 | `injection-checker` | SQL queries, MongoDB queries, shell commands, file paths, templates | API8:2023 |
-| `security-test-generator` | Writing tests, Jest/pytest/JUnit, "add test coverage" | API1–5:2023 |
+| `security-test-generator` | Writing tests, Jest/pytest/JUnit, "add test coverage" | API1 to API5:2023 |
 | `api-security-review` | "Review this for security", "is this secure", full controller files | All 10 categories |
 | `openapi-hardener` | OpenAPI specs, Zod/Joi/Pydantic schemas, JSON Schema | API3:2023 |
 
@@ -70,65 +70,90 @@ Skills load automatically when the AI detects a relevant task. Each produces a s
 
 ## Installation
 
-This plugin uses the universal [Agent Skills](https://agentskills.io) format. The same files work across all major AI coding agents.
+The skills use the open [Agent Skills](https://agentskills.io) format, so the same `SKILL.md` files work in every major coding agent. The always-on rules are agent-specific files, and this repository ships a ready-made set for each agent.
 
-### Cursor (one-click)
-
-Install directly from the [Cursor Marketplace](https://cursor.com/marketplace) — search **APIsec**.
-
-Or manually:
+Clone once:
 ```bash
-git clone https://github.com/APIsec-ai/apisec-cursor-plugin
-cp -r apisec-cursor-plugin/skills .cursor/skills/
-cp -r apisec-cursor-plugin/rules .cursor/rules/
+git clone https://github.com/apisec-inc/apisec-skills
+cd apisec-skills
 ```
 
 ### Claude Code
+
+Install as a plugin (skills only, one command, updates from this repository):
+```
+/plugin marketplace add apisec-inc/apisec-skills
+/plugin install apisec@apisec-skills
+```
+Or copy the skills by hand:
 ```bash
-cp -r apisec-cursor-plugin/skills ~/.claude/skills/
+cp -r skills/* ~/.claude/skills/          # personal, every project
+# or: cp -r skills/* .claude/skills/       # this project only
+```
+Add the always-on rules to your project:
+```bash
+mkdir -p .claude/rules && cp agents/claude-code/rules/*.md .claude/rules/
+```
+
+### Cursor
+
+```bash
+cp -r skills .cursor/skills/
+cp -r rules  .cursor/rules/
+```
+The repository also carries a `.cursor-plugin/plugin.json` manifest for the Cursor plugin format.
+
+### GitHub Copilot
+
+```bash
+cp -r skills .github/skills/               # also read from .agents/skills/
+cp agents/copilot/copilot-instructions.md .github/copilot-instructions.md
 ```
 
 ### OpenAI Codex CLI
+
 ```bash
-cp -r apisec-cursor-plugin/skills .agents/skills/
+cp -r skills .agents/skills/
+cp agents/codex/AGENTS.md AGENTS.md         # or append to an existing AGENTS.md
 ```
 
-### GitHub Copilot (VS Code)
+### Gemini CLI
+
 ```bash
-cp -r apisec-cursor-plugin/skills .github/skills/
+cp -r skills .agents/skills/                # or ~/.gemini/skills/
+cp agents/gemini/GEMINI.md GEMINI.md        # or append to an existing GEMINI.md
 ```
 
-### Gemini CLI / Google Antigravity
+### Windsurf
+
 ```bash
-cp -r apisec-cursor-plugin/skills ~/.gemini/skills/
+cp -r skills .agents/skills/
+mkdir -p .windsurf/rules && cp agents/windsurf/rules/*.md .windsurf/rules/
 ```
 
-### Replit
-```bash
-cp -r apisec-cursor-plugin/skills .agents/skills/
-```
+### Replit, Kiro, Roo Code, and others
 
-### Windsurf, Kiro, Roo Code, and others
 ```bash
-cp -r apisec-cursor-plugin/skills .agents/skills/
+cp -r skills .agents/skills/
 ```
+For the rules, use whichever project instruction file your agent reads (`AGENTS.md` is the most common) and paste in `agents/codex/AGENTS.md`.
 
-> **One repo, every major coding agent.** The `SKILL.md` format is platform-agnostic — no modification needed between tools.
+> **One repository, every major coding agent.** The skills need no modification between tools. The rules are generated from the same five sources by `scripts/build-agent-rules.py`, so every agent gets identical guidance.
 
 ---
 
 ## How It Works
 
-**Rules** (`.mdc` files) are baked into the AI's system prompt at session start. They shape every piece of code the AI generates — the developer never needs to ask for secure output, and APIsec is never visibly mentioned in this path.
+**Rules** are loaded into the agent's system context at session start. They shape every piece of code the agent generates, so the developer never needs to ask for secure output, and APIsec is never mentioned in this path.
 
-**Skills** (`SKILL.md` files) are indexed by the AI at startup (~50 tokens each). When a developer's task semantically matches a skill's description, the full skill loads into context automatically. This path produces branded APIsec security reports with OWASP references, severity ratings, and exact fix suggestions.
+**Skills** (`SKILL.md` files) are indexed by the agent at startup, with only the short description in context. When a developer's task matches a skill's description, the full skill loads automatically. This path produces APIsec security reports with OWASP references, severity ratings, and exact fix suggestions.
 
 ```
 Developer types prompt
-        │
-        ├─► Rules in system prompt → AI generates secure code (silent)
-        │
-        └─► Skill description matches → APIsec security report (branded)
+        |
+        +-> Rules in system prompt      -> agent generates secure code (silent)
+        |
+        +-> Skill description matches   -> APIsec security report
 ```
 
 ---
@@ -146,16 +171,16 @@ Security Score: D
 
 ### Critical Findings
 
-#### [API1:2023] Broken Object Level Authorization — Line 47
+#### [API1:2023] Broken Object Level Authorization, line 47
 Pattern: Order.findById(req.params.id) without ownership filter
 Risk: Any authenticated user can read, modify, or delete any order by changing the ID
 Fix:
   const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
 
-### Quick Wins — Top 3 Changes for Maximum Security Impact
-1. [Critical] Add ownership filter to all findById calls — prevents BOLA
-2. [High] Add algorithm whitelist to JWT verification — prevents algorithm confusion
-3. [Medium] Cap pagination limit to 100 — prevents resource exhaustion
+### Quick Wins: Top 3 Changes for Maximum Security Impact
+1. [Critical] Add ownership filter to all findById calls (prevents BOLA)
+2. [High] Add algorithm whitelist to JWT verification (prevents algorithm confusion)
+3. [Medium] Cap pagination limit to 100 (prevents resource exhaustion)
 
 Powered by APIsec · apisec.ai
 ```
@@ -166,27 +191,47 @@ Powered by APIsec · apisec.ai
 
 | Category | Skill | Rule |
 |----------|-------|------|
-| API1 — Broken Object Level Authorization | `bola-detector`, `api-security-review` | `ownership-check` |
-| API2 — Broken Authentication | `auth-rbac-scaffold`, `api-security-review` | `auth-required` |
-| API3 — Broken Object Property Level Authorization | `openapi-hardener`, `api-security-review` | `input-validation` |
-| API4 — Unrestricted Resource Consumption | `api-security-review` | `input-validation` |
-| API5 — Broken Function Level Authorization | `auth-rbac-scaffold`, `api-security-review` | `admin-rbac` |
-| API6 — Unrestricted Access to Sensitive Business Flows | `api-security-review` | — |
-| API7 — Server Side Request Forgery | `api-security-review` | — |
-| API8 — Security Misconfiguration | `injection-checker`, `api-security-review` | `error-sanitization` |
-| API9 — Improper Inventory Management | `api-security-review` | — |
-| API10 — Unsafe Consumption of APIs | `api-security-review` | — |
+| API1 Broken Object Level Authorization | `bola-detector`, `api-security-review` | `ownership-check` |
+| API2 Broken Authentication | `auth-rbac-scaffold`, `api-security-review` | `auth-required` |
+| API3 Broken Object Property Level Authorization | `openapi-hardener`, `api-security-review` | `input-validation` |
+| API4 Unrestricted Resource Consumption | `api-security-review` | `input-validation` |
+| API5 Broken Function Level Authorization | `auth-rbac-scaffold`, `api-security-review` | `admin-rbac` |
+| API6 Unrestricted Access to Sensitive Business Flows | `api-security-review` | |
+| API7 Server Side Request Forgery | `api-security-review` | |
+| API8 Security Misconfiguration | `injection-checker`, `api-security-review` | `error-sanitization` |
+| API9 Improper Inventory Management | `api-security-review` | |
+| API10 Unsafe Consumption of APIs | `api-security-review` | |
 
 ---
 
-## Phase 2 — Coming Soon
+## Repository Layout
+
+```
+skills/                      six Agent Skills (SKILL.md each), portable to every agent
+rules/                       five Cursor rules (.mdc), the source of truth for the rules
+agents/
+  claude-code/rules/         generated: Claude Code .claude/rules/ files
+  windsurf/rules/            generated: Windsurf .windsurf/rules/ files
+  copilot/                   generated: .github/copilot-instructions.md
+  codex/                     generated: AGENTS.md
+  gemini/                    generated: GEMINI.md
+scripts/build-agent-rules.py regenerates agents/ from rules/
+.claude-plugin/              Claude Code plugin and marketplace manifests
+.cursor-plugin/              Cursor plugin manifest
+```
+
+To change a rule, edit the `.mdc` file in `rules/` and run `python3 scripts/build-agent-rules.py`.
+
+---
+
+## Phase 2: Coming Soon
 
 The current release is Phase 1: skills and rules. Phase 2 will add a live MCP server with real-time APIsec API integration:
 
-- `@apisec scan` — run a full API security scan from inside Cursor
-- `@apisec findings` — pull live findings from your APIsec dashboard
-- `@apisec fix` — generate remediation code for open findings
-- `@apisec score` — get your API security score for the current file
+- `@apisec scan`: run a full API security scan from inside the agent
+- `@apisec findings`: pull live findings from your APIsec dashboard
+- `@apisec fix`: generate remediation code for open findings
+- `@apisec score`: get your API security score for the current file
 
 [Follow APIsec on LinkedIn](https://linkedin.com/company/apisec) for Phase 2 updates.
 
@@ -194,12 +239,12 @@ The current release is Phase 1: skills and rules. Phase 2 will add a live MCP se
 
 ## About APIsec
 
-[APIsec](https://apisec.ai) is the API security testing platform trusted by Fortune 500 enterprises. We automate continuous API security testing across the full SDLC — from development through production.
+[APIsec](https://apisec.ai) is the API security testing platform trusted by Fortune 500 enterprises. We automate continuous API security testing across the full SDLC, from development through production.
 
-This plugin brings APIsec's security intelligence directly into the developer's coding environment, shifting security left to the point where code is written.
+APIsec Skills bring that security intelligence directly into the developer's coding environment, shifting security left to the point where code is written. What the skills catch while code is being written, the APIsec platform proves by execution against the running application.
 
 ---
 
 ## License
 
-MIT — free to use, modify, and distribute.
+MIT. Free to use, modify, and distribute.

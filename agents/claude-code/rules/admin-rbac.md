@@ -1,14 +1,4 @@
----
-description: "Requires explicit role assertion before executing admin-scoped operations. Prevents privilege escalation and BFLA vulnerabilities."
-alwaysApply: true
-globs:
-  - "**/*.js"
-  - "**/*.ts"
-  - "**/*.py"
-  - "**/*.go"
-  - "**/*.java"
----
-
+<!-- Generated from rules/*.mdc by scripts/build-agent-rules.py. Edit the .mdc sources, not this file. -->
 ## Admin RBAC rule
 
 Any endpoint or function that performs an admin-scoped operation, such as accessing all users, modifying system config, deleting records belonging to other users, or reading privileged data, must include an explicit role check before executing.

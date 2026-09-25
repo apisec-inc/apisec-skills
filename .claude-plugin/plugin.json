@@ -1,0 +1,11 @@
+{
+  "name": "apisec",
+  "displayName": "APIsec API Security",
+  "version": "1.1.0",
+  "description": "OWASP API Security Top 10 skills for AI coding agents: BOLA detection, auth and RBAC scaffolding, injection checks, security test generation, full API security review, and OpenAPI schema hardening.",
+  "author": { "name": "APIsec", "url": "https://apisec.ai" },
+  "homepage": "https://github.com/apisec-inc/apisec-skills",
+  "repository": "https://github.com/apisec-inc/apisec-skills",
+  "license": "MIT",
+  "keywords": ["api-security", "owasp", "bola", "authorization", "injection", "openapi", "security-review"]
+}

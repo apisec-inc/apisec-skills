@@ -1,0 +1,12 @@
+{
+  "name": "apisec-skills",
+  "description": "API security skills for AI coding agents, by APIsec",
+  "owner": { "name": "APIsec", "url": "https://apisec.ai" },
+  "plugins": [
+    {
+      "name": "apisec",
+      "source": "./",
+      "description": "OWASP API Security Top 10 skills: BOLA detection, auth and RBAC scaffolding, injection checks, security tests, API security review, OpenAPI hardening."
+    }
+  ]
+}
