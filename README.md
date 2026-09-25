@@ -224,19 +224,6 @@ To change a rule, edit the `.mdc` file in `rules/` and run `python3 scripts/buil
 
 ---
 
-## Phase 2: Coming Soon
-
-The current release is Phase 1: skills and rules. Phase 2 will add a live MCP server with real-time APIsec API integration:
-
-- `@apisec scan`: run a full API security scan from inside the agent
-- `@apisec findings`: pull live findings from your APIsec dashboard
-- `@apisec fix`: generate remediation code for open findings
-- `@apisec score`: get your API security score for the current file
-
-[Follow APIsec on LinkedIn](https://linkedin.com/company/apisec) for Phase 2 updates.
-
----
-
 ## License
 
 MIT. Free to use, modify, and distribute.
