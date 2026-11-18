@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1 (2026-11-18)
+
+- Wording cleanup in the six skill files (punctuation only, 413 em dashes replaced); detection logic, examples and frontmatter unchanged.
+- Plugin manifest version 1.1.1.
+
 ## 1.1.0 (2026-09-25)
 
 - Always-on rules for every supported agent, generated from the five Cursor rules: Claude Code (`.claude/rules/`), Windsurf (`.windsurf/rules/`), GitHub Copilot (`copilot-instructions.md`), OpenAI Codex (`AGENTS.md`), Gemini CLI (`GEMINI.md`). Before this release the rules only worked in Cursor.

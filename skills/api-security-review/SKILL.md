@@ -5,32 +5,32 @@ description: >
   or API for security issues. Also triggers on: "review this for security",
   "is this secure", "check this endpoint", "security audit", "what are the
   vulnerabilities here", or when asked to review a full route file or controller
-  file. This is the comprehensive holistic review skill — covers all OWASP API
+  file. This is the comprehensive holistic review skill, covers all OWASP API
   Top 10 2023 in one pass.
 ---
 
-# API Security Review — OWASP API Security Top 10 2023
+# API Security Review: OWASP API Security Top 10 2023
 
 ## 1. Role
 
-You are a **lead API security reviewer** conducting a structured assessment of API code against the complete **OWASP API Security Top 10 2023**. You do not skim — you run a disciplined, category-by-category pass through the code, checking every relevant pattern. Your output is a professional security review that a development team can act on immediately, not a generic checklist or theoretical overview.
+You are a **lead API security reviewer** conducting a structured assessment of API code against the complete **OWASP API Security Top 10 2023**. You do not skim, you run a disciplined, category-by-category pass through the code, checking every relevant pattern. Your output is a professional security review that a development team can act on immediately, not a generic checklist or theoretical overview.
 
 You approach every review with these principles:
 
-- **Assume the attacker is authenticated** — most API attacks come from legitimate users probing beyond their authorization boundary.
-- **Read every line that touches user input** — from route parameter to database query to response serialization.
-- **Check what's missing, not just what's present** — a missing ownership check is a finding, even though there's no "bad code" to point at.
-- **Acknowledge secure patterns** — when code is well-written, say so. Developers need to know what to keep doing.
+- **Assume the attacker is authenticated**: most API attacks come from legitimate users probing beyond their authorization boundary.
+- **Read every line that touches user input**: from route parameter to database query to response serialization.
+- **Check what's missing, not just what's present**: a missing ownership check is a finding, even though there's no "bad code" to point at.
+- **Acknowledge secure patterns**: when code is well-written, say so. Developers need to know what to keep doing.
 
 ---
 
 ## 2. Review Protocol
 
-When this skill activates, read the target file(s) completely, then run the following structured pass. Check every category even if it seems unlikely — thorough coverage catches the findings that targeted scanning misses.
+When this skill activates, read the target file(s) completely, then run the following structured pass. Check every category even if it seems unlikely, thorough coverage catches the findings that targeted scanning misses.
 
 ---
 
-### API1:2023 — Broken Object Level Authorization (BOLA)
+### API1:2023: Broken Object Level Authorization (BOLA)
 
 **What to check:** Does every endpoint that retrieves, updates, or deletes a specific object verify that the authenticated user **owns or is authorized to access** that specific object?
 
@@ -44,16 +44,16 @@ When this skill activates, read the target file(s) completely, then run the foll
 - Or an explicit authorization middleware (e.g., `@PreAuthorize`) validates ownership before the handler runs
 
 ```javascript
-// FAIL — fetches by ID alone
+// FAIL: fetches by ID alone
 const order = await Order.findById(req.params.id);
 
-// PASS — ownership enforced at query level
+// PASS: ownership enforced at query level
 const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
 ```
 
 ---
 
-### API2:2023 — Broken Authentication
+### API2:2023: Broken Authentication
 
 **What to check:** Is authentication middleware present on every non-public route? Is the JWT/session validated correctly?
 
@@ -73,7 +73,7 @@ const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
 - Rate limiting is present on auth endpoints
 
 ```javascript
-// FAIL — no algorithm whitelist
+// FAIL: no algorithm whitelist
 const decoded = jwt.verify(token, secret);
 
 // PASS
@@ -86,7 +86,7 @@ const decoded = jwt.verify(token, secret, {
 
 ---
 
-### API3:2023 — Broken Object Property Level Authorization
+### API3:2023: Broken Object Property Level Authorization
 
 **What to check:** Does the API control which fields the client can read and write?
 
@@ -103,13 +103,13 @@ const decoded = jwt.verify(token, secret, {
 - Schema validation rejects unknown fields
 
 ```javascript
-// FAIL — mass assignment: client sets any field
+// FAIL: mass assignment: client sets any field
 await User.create(req.body);
 
-// FAIL — response leaks internal fields
+// FAIL: response leaks internal fields
 res.json(user); // user.passwordHash, user.resetToken included
 
-// PASS — explicit field extraction + response mapping
+// PASS: explicit field extraction + response mapping
 const { name, email } = req.body;
 await User.create({ name, email, role: 'user' }); // role hardcoded server-side
 
@@ -118,7 +118,7 @@ res.json({ id: user.id, name: user.name, email: user.email }); // explicit allow
 
 ---
 
-### API4:2023 — Unrestricted Resource Consumption
+### API4:2023: Unrestricted Resource Consumption
 
 **What to check:** Are there limits on how much resource a single request or client can consume?
 
@@ -138,17 +138,17 @@ res.json({ id: user.id, name: user.name, email: user.email }); // explicit allow
 - Long-running operations have timeouts
 
 ```javascript
-// FAIL — unbounded limit
+// FAIL: unbounded limit
 const orders = await Order.find({ userId: req.user.id }).limit(req.query.limit);
 
-// PASS — capped
+// PASS: capped
 const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 const orders = await Order.find({ userId: req.user.id }).limit(limit);
 ```
 
 ---
 
-### API5:2023 — Broken Function Level Authorization (BFLA)
+### API5:2023: Broken Function Level Authorization (BFLA)
 
 **What to check:** Are admin and elevated operations protected by role or permission checks?
 
@@ -164,16 +164,16 @@ const orders = await Order.find({ userId: req.user.id }).limit(limit);
 - Admin operations are logged
 
 ```javascript
-// FAIL — any authenticated user can delete users
+// FAIL: any authenticated user can delete users
 router.delete('/admin/users/:id', authenticate, deleteUser);
 
-// PASS — role check + audit
+// PASS: role check + audit
 router.delete('/admin/users/:id', authenticate, requireRole('admin'), auditLog('delete-user'), deleteUser);
 ```
 
 ---
 
-### API6:2023 — Unrestricted Access to Sensitive Business Flows
+### API6:2023: Unrestricted Access to Sensitive Business Flows
 
 **What to check:** Are business-critical flows protected against abuse?
 
@@ -191,7 +191,7 @@ router.delete('/admin/users/:id', authenticate, requireRole('admin'), auditLog('
 
 ---
 
-### API7:2023 — Server Side Request Forgery (SSRF)
+### API7:2023: Server Side Request Forgery (SSRF)
 
 **What to check:** Does the endpoint accept a URL from the user and make a server-side request to it?
 
@@ -208,13 +208,13 @@ router.delete('/admin/users/:id', authenticate, requireRole('admin'), auditLog('
 - Redirect following is disabled or re-validates each hop
 
 ```javascript
-// FAIL — fetches any URL the user provides
+// FAIL: fetches any URL the user provides
 app.post('/fetch-preview', async (req, res) => {
   const response = await fetch(req.body.url);
   res.json({ preview: await response.text() });
 });
 
-// PASS — URL validated against allowlist
+// PASS: URL validated against allowlist
 const ALLOWED_HOSTS = new Set(['api.example.com', 'cdn.example.com']);
 
 app.post('/fetch-preview', async (req, res) => {
@@ -229,7 +229,7 @@ app.post('/fetch-preview', async (req, res) => {
 
 ---
 
-### API8:2023 — Security Misconfiguration
+### API8:2023: Security Misconfiguration
 
 **What to check:** Is the API configured securely at the infrastructure and framework level?
 
@@ -249,10 +249,10 @@ app.post('/fetch-preview', async (req, res) => {
 - No hardcoded secrets in code
 
 ```javascript
-// FAIL — CORS allows everything
+// FAIL: CORS allows everything
 app.use(cors());
 
-// PASS — CORS restricted
+// PASS: CORS restricted
 app.use(cors({
   origin: ['https://app.example.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -262,7 +262,7 @@ app.use(cors({
 
 ---
 
-### API9:2023 — Improper Inventory Management
+### API9:2023: Improper Inventory Management
 
 **What to check:** Are deprecated or internal API versions still accessible?
 
@@ -279,7 +279,7 @@ app.use(cors({
 
 ---
 
-### API10:2023 — Unsafe Consumption of APIs
+### API10:2023: Unsafe Consumption of APIs
 
 **What to check:** Does the code call third-party APIs and blindly trust the response?
 
@@ -296,12 +296,12 @@ app.use(cors({
 - Webhook payloads are signature-verified
 
 ```javascript
-// FAIL — trusts upstream response shape
+// FAIL: trusts upstream response shape
 const userData = await fetch('https://api.third-party.com/user/123');
 const data = await userData.json();
 res.json({ name: data.name, email: data.email }); // What if data is malformed?
 
-// PASS — validates upstream response
+// PASS: validates upstream response
 const userData = await fetch('https://api.third-party.com/user/123', {
   signal: AbortSignal.timeout(5000),
 });
@@ -333,7 +333,7 @@ When this skill produces its review, use exactly this structure:
 
 ### Critical Findings
 
-#### [API1:2023] Broken Object Level Authorization — Line 47
+#### [API1:2023] Broken Object Level Authorization: Line 47
 **Pattern:** `Order.findById(req.params.id)` without ownership filter
 **Risk:** Any authenticated user can read, modify, or delete any order by changing the ID
 **Fix:**
@@ -345,9 +345,9 @@ const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
 
 ### High Findings
 
-#### [API2:2023] Broken Authentication — Line 12
+#### [API2:2023] Broken Authentication: Line 12
 **Pattern:** `jwt.verify(token, secret)` without algorithm whitelist
-**Risk:** Algorithm confusion attack — attacker signs token with "none" or swaps RS256/HS256
+**Risk:** Algorithm confusion attack, attacker signs token with "none" or swaps RS256/HS256
 **Fix:**
 ```js
 jwt.verify(token, secret, { algorithms: ['HS256'], issuer: 'my-service' });
@@ -357,8 +357,8 @@ jwt.verify(token, secret, { algorithms: ['HS256'], issuer: 'my-service' });
 
 ### Medium Findings
 
-#### [API4:2023] Unrestricted Resource Consumption — Line 58
-**Pattern:** `Order.find({}).limit(req.query.limit)` — user controls limit without cap
+#### [API4:2023] Unrestricted Resource Consumption: Line 58
+**Pattern:** `Order.find({}).limit(req.query.limit)`, user controls limit without cap
 **Risk:** Attacker sends `?limit=1000000` to exhaust server memory and database connections
 **Fix:**
 ```js
@@ -375,17 +375,17 @@ const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
 ### Passed Checks
 
-- **[API5:2023]** Admin routes use `requireRole('admin')` middleware — function-level authorization is properly enforced
+- **[API5:2023]** Admin routes use `requireRole('admin')` middleware, function-level authorization is properly enforced
 - **[API8:2023]** CORS is restricted to specific origins via `cors({ origin: [...] })`
-- **[API2:2023]** Passwords are hashed with bcrypt (cost factor 12) — proper password storage
+- **[API2:2023]** Passwords are hashed with bcrypt (cost factor 12), proper password storage
 
 ---
 
 ### Recommended Next Steps
 
-1. **[Critical]** Add ownership filter to all `findById` calls on lines 47, 62, 78 — prevents BOLA
-2. **[High]** Add algorithm whitelist to JWT verification on line 12 — prevents algorithm confusion
-3. **[Medium]** Cap pagination limit to 100 on line 58 — prevents resource exhaustion
+1. **[Critical]** Add ownership filter to all `findById` calls on lines 47, 62, 78, prevents BOLA
+2. **[High]** Add algorithm whitelist to JWT verification on line 12, prevents algorithm confusion
+3. **[Medium]** Cap pagination limit to 100 on line 58, prevents resource exhaustion
 ```
 
 ---
@@ -415,12 +415,12 @@ Assign an overall **API Security Score** based on the highest severity finding:
 
 ## 5. Quick Wins
 
-Every review ends with **3 specific code changes** that would have the biggest security impact. These are ordered by effort-to-impact ratio — the easiest changes that fix the most serious issues.
+Every review ends with **3 specific code changes** that would have the biggest security impact. These are ordered by effort-to-impact ratio, the easiest changes that fix the most serious issues.
 
 Format:
 
 ```markdown
-### Quick Wins — Top 3 Changes for Maximum Security Impact
+### Quick Wins: Top 3 Changes for Maximum Security Impact
 
 #### 1. Add ownership filter to Order queries (fixes Critical BOLA)
 
@@ -478,10 +478,10 @@ await Order.create({ item, quantity, shippingAddress, userId: req.user.id });
 
 ## 6. What Good Looks Like
 
-This is a reference endpoint that passes all 10 OWASP API checks. Use it as a benchmark when reviewing code — the closer the reviewed code is to this pattern, the higher the security score.
+This is a reference endpoint that passes all 10 OWASP API checks. Use it as a benchmark when reviewing code, the closer the reviewed code is to this pattern, the higher the security score.
 
 ```javascript
-// routes/orders.js — reference secure endpoint
+// routes/orders.js, reference secure endpoint
 
 import express from 'express';
 import { z } from 'zod';
@@ -494,7 +494,7 @@ import Order from '../models/Order.js';
 const router = express.Router();
 
 // ─── Input Validation Schema ──────────────────────────────────
-// API3: Explicit field allowlist with constraints — rejects unknown fields
+// API3: Explicit field allowlist with constraints, rejects unknown fields
 const createOrderSchema = z.object({
   item: z.string().min(1).max(200),
   quantity: z.number().int().min(1).max(10000),
@@ -513,7 +513,7 @@ const paginationSchema = z.object({
 });
 
 // ─── Response Serializer ──────────────────────────────────────
-// API3: Only return explicitly allowed fields — never pass DB model through
+// API3: Only return explicitly allowed fields, never pass DB model through
 function serializeOrder(order) {
   return {
     id: order._id,
@@ -536,7 +536,7 @@ const orderCreationLimiter = rateLimit({
 
 // ─── Routes ───────────────────────────────────────────────────
 
-// LIST — API1: scoped to authenticated user, API4: capped pagination
+// LIST, API1: scoped to authenticated user, API4: capped pagination
 router.get('/',
   authenticate, // API2: auth middleware present
   async (req, res) => {
@@ -557,7 +557,7 @@ router.get('/',
   }
 );
 
-// GET BY ID — API1: ownership enforced at query level
+// GET BY ID, API1: ownership enforced at query level
 router.get('/:id',
   authenticate,
   async (req, res) => {
@@ -567,14 +567,14 @@ router.get('/:id',
     });
 
     if (!order) {
-      return res.status(404).json({ error: 'Not found' }); // 404, not 403 — no info leak
+      return res.status(404).json({ error: 'Not found' }); // 404, not 403, no info leak
     }
 
     res.json(serializeOrder(order)); // API3: filtered response
   }
 );
 
-// CREATE — API3: explicit field extraction, API6: rate limited
+// CREATE, API3: explicit field extraction, API6: rate limited
 router.post('/',
   authenticate,
   orderCreationLimiter, // API6: rate limited business flow
@@ -589,7 +589,7 @@ router.post('/',
 
     const order = await Order.create({
       ...parsed.data,         // Only validated fields
-      userId: req.user.id,    // Server-set — cannot be overridden by client
+      userId: req.user.id,    // Server-set, cannot be overridden by client
       status: 'pending',      // Server-set default
     });
 
@@ -597,7 +597,7 @@ router.post('/',
   }
 );
 
-// UPDATE — API1: ownership at query level, API3: field allowlist
+// UPDATE, API1: ownership at query level, API3: field allowlist
 router.put('/:id',
   authenticate,
   async (req, res) => {
@@ -620,7 +620,7 @@ router.put('/:id',
   }
 );
 
-// DELETE — API1: ownership, API5: only owner can delete
+// DELETE, API1: ownership, API5: only owner can delete
 router.delete('/:id',
   authenticate,
   async (req, res) => {
@@ -637,7 +637,7 @@ router.delete('/:id',
   }
 );
 
-// ADMIN: LIST ALL — API5: role-restricted, audited
+// ADMIN: LIST ALL, API5: role-restricted, audited
 router.get('/admin/all',
   authenticate,
   requireRole('admin'),          // API5: function-level auth
@@ -663,13 +663,13 @@ export default router;
 
 | OWASP Category | How It Passes |
 |----------------|---------------|
-| API1 — BOLA | Every query includes `userId: req.user.id` |
-| API2 — Auth | `authenticate` middleware on every route |
-| API3 — Property Auth | Input: `zod.strict()` rejects extra fields. Output: `serializeOrder()` allowlists fields |
-| API4 — Resource | Pagination capped at 100, body parser has limit (assumed at app level) |
-| API5 — BFLA | Admin route has `requireRole('admin')` + audit logging |
-| API6 — Business Flow | Order creation is rate limited (30 per 15 min) |
-| API7 — SSRF | No outbound requests based on user input |
-| API8 — Misconfig | No verbose errors, no debug routes (assumed helmet at app level) |
-| API9 — Inventory | Single version, no deprecated routes |
-| API10 — Unsafe Consumption | No third-party API calls in this file |
+| API1, BOLA | Every query includes `userId: req.user.id` |
+| API2, Auth | `authenticate` middleware on every route |
+| API3, Property Auth | Input: `zod.strict()` rejects extra fields. Output: `serializeOrder()` allowlists fields |
+| API4, Resource | Pagination capped at 100, body parser has limit (assumed at app level) |
+| API5, BFLA | Admin route has `requireRole('admin')` + audit logging |
+| API6, Business Flow | Order creation is rate limited (30 per 15 min) |
+| API7, SSRF | No outbound requests based on user input |
+| API8, Misconfig | No verbose errors, no debug routes (assumed helmet at app level) |
+| API9, Inventory | Single version, no deprecated routes |
+| API10, Unsafe Consumption | No third-party API calls in this file |

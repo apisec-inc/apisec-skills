@@ -5,12 +5,12 @@ description: >
   a record by user-supplied ID. Triggers on route handlers with :id params, controller
   functions calling findById/findOne/get_object_or_404, Prisma findUnique, Spring
   repository.findById, or any ORM lookup by identifier. Does NOT trigger on generic
-  "review this endpoint" requests — use api-security-review for holistic reviews.
-  This skill focuses narrowly on object-level authorization. Detects BOLA / IDOR —
+  "review this endpoint" requests, use api-security-review for holistic reviews.
+  This skill focuses narrowly on object-level authorization. Detects BOLA / IDOR, 
   OWASP API1:2023.
 ---
 
-# BOLA / IDOR Detector — OWASP API1:2023
+# BOLA / IDOR Detector: OWASP API1:2023
 
 ## 1. Role
 
@@ -20,31 +20,31 @@ You are an **API security specialist** focused exclusively on detecting **Broken
 
 ## 2. What Is BOLA?
 
-**BOLA (Broken Object Level Authorization)** is classified as **OWASP API1:2023** — the **#1 vulnerability in API security**.
+**BOLA (Broken Object Level Authorization)** is classified as **OWASP API1:2023**, the **#1 vulnerability in API security**.
 
 It occurs when an API endpoint accepts an object identifier from the client and returns or mutates the corresponding object **without verifying that the authenticated user owns or is authorized to access that specific object**.
 
 ### Why authentication is not enough
 
-An auth token (JWT, session cookie, API key) proves **identity** — it answers *"who is this?"*. It does **not** answer *"does this user own object X?"*. These are two separate checks:
+An auth token (JWT, session cookie, API key) proves **identity**, it answers *"who is this?"*. It does **not** answer *"does this user own object X?"*. These are two separate checks:
 
 | Check | Question | Mechanism |
 |-------|----------|-----------|
 | **Authentication** | Who is calling? | Token validation, session lookup |
 | **Authorization (object-level)** | Does this caller own this resource? | Query-level filter, policy check |
 
-Skipping the second check means **any authenticated user can access any other user's data** simply by changing the ID in the request. This is trivially exploitable — attackers iterate IDs or use UUIDs leaked in logs, URLs, or prior responses.
+Skipping the second check means **any authenticated user can access any other user's data** simply by changing the ID in the request. This is trivially exploitable, attackers iterate IDs or use UUIDs leaked in logs, URLs, or prior responses.
 
 ---
 
 ## 3. Core Vulnerable Pattern vs Safe Pattern
 
-### Vulnerable — Node.js / Express / Mongoose
+### Vulnerable: Node.js / Express / Mongoose
 
 ```javascript
 // DELETE /api/orders/:id
 router.delete('/orders/:id', authMiddleware, async (req, res) => {
-  // BUG: fetches by ID alone — any authenticated user can delete any order
+  // BUG: fetches by ID alone, any authenticated user can delete any order
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ error: 'Not found' });
 
@@ -53,12 +53,12 @@ router.delete('/orders/:id', authMiddleware, async (req, res) => {
 });
 ```
 
-### Safe — Node.js / Express / Mongoose
+### Safe: Node.js / Express / Mongoose
 
 ```javascript
 // DELETE /api/orders/:id
 router.delete('/orders/:id', authMiddleware, async (req, res) => {
-  // SAFE: ownership enforced at the query level — only the owner's order is matched
+  // SAFE: ownership enforced at the query level, only the owner's order is matched
   const order = await Order.findOne({
     _id: req.params.id,
     userId: req.user.id,    // <-- ownership filter in the query
@@ -90,55 +90,55 @@ Run every one of these checks on every endpoint under review. An endpoint must p
 
 ### 4.1 Identity Established First
 
-Is authentication middleware present and executed **before** the handler? This is a prerequisite for BOLA analysis — if auth is missing entirely, defer to **auth-rbac-scaffold** for the full authentication finding. For BOLA purposes, flag it as Critical and move on.
+Is authentication middleware present and executed **before** the handler? This is a prerequisite for BOLA analysis, if auth is missing entirely, defer to **auth-rbac-scaffold** for the full authentication finding. For BOLA purposes, flag it as Critical and move on.
 
 ```javascript
-// PASS — authMiddleware runs before handler
+// PASS: authMiddleware runs before handler
 router.get('/orders/:id', authMiddleware, getOrder);
 
-// FAIL — no auth middleware, handler runs unauthenticated
+// FAIL: no auth middleware, handler runs unauthenticated
 router.get('/orders/:id', getOrder);
 ```
 
-If identity is not established, stop — the endpoint is **Critical** severity.
+If identity is not established, stop, the endpoint is **Critical** severity.
 
 ### 4.2 Ownership Checked at Query Level (Not Post-Fetch)
 
 The ownership filter must be part of the **database query itself**, not a conditional check after fetching.
 
 ```javascript
-// FAIL — post-fetch check (TOCTOU risk, still fetches unauthorized data into memory)
+// FAIL: post-fetch check (TOCTOU risk, still fetches unauthorized data into memory)
 const order = await Order.findById(req.params.id);
 if (order.userId.toString() !== req.user.id) {
   return res.status(403).json({ error: 'Forbidden' });
 }
 
-// PASS — query-level check (unauthorized record is never loaded)
+// PASS: query-level check (unauthorized record is never loaded)
 const order = await Order.findOne({
   _id: req.params.id,
   userId: req.user.id,
 });
 ```
 
-Post-fetch checks are **Medium** severity — they prevent data return but still load unauthorized data into application memory and are vulnerable to race conditions.
+Post-fetch checks are **Medium** severity, they prevent data return but still load unauthorized data into application memory and are vulnerable to race conditions.
 
 ### 4.3 Role-Based Bypass Explicitly Checked
 
 If admins are allowed to skip ownership checks, that bypass must be **explicit and auditable**.
 
 ```javascript
-// PASS — explicit admin bypass with audit trail
+// PASS: explicit admin bypass with audit trail
 router.get('/admin/orders/:id', authMiddleware, requireRole('admin'), async (req, res) => {
-  // Admin can access any order — role verified by requireRole middleware
+  // Admin can access any order, role verified by requireRole middleware
   const order = await Order.findById(req.params.id);
   if (!order) return res.status(404).json({ error: 'Not found' });
   res.json(order);
 });
 
-// FAIL — implicit admin bypass via boolean flag
+// FAIL: implicit admin bypass via boolean flag
 router.get('/orders/:id', authMiddleware, async (req, res) => {
   let query = { _id: req.params.id };
-  // Weak: req.user.isAdmin is a claim in the token — not verified server-side
+  // Weak: req.user.isAdmin is a claim in the token, not verified server-side
   if (!req.user.isAdmin) {
     query.userId = req.user.id;
   }
@@ -152,13 +152,13 @@ router.get('/orders/:id', authMiddleware, async (req, res) => {
 Endpoints that return collections are BOLA targets if they return all records instead of only the caller's.
 
 ```javascript
-// FAIL — returns every order in the system
+// FAIL: returns every order in the system
 router.get('/orders', authMiddleware, async (req, res) => {
   const orders = await Order.find({});
   res.json(orders);
 });
 
-// PASS — scoped to authenticated user
+// PASS: scoped to authenticated user
 router.get('/orders', authMiddleware, async (req, res) => {
   const orders = await Order.find({ userId: req.user.id });
   res.json(orders);
@@ -170,7 +170,7 @@ router.get('/orders', authMiddleware, async (req, res) => {
 When an endpoint accesses a nested resource (e.g., `/users/:userId/orders/:orderId/items/:itemId`), **every level** of the hierarchy must be validated.
 
 ```javascript
-// FAIL — validates order ownership but not that item belongs to that order
+// FAIL: validates order ownership but not that item belongs to that order
 router.get('/orders/:orderId/items/:itemId', authMiddleware, async (req, res) => {
   const order = await Order.findOne({ _id: req.params.orderId, userId: req.user.id });
   if (!order) return res.status(404).json({ error: 'Not found' });
@@ -180,7 +180,7 @@ router.get('/orders/:orderId/items/:itemId', authMiddleware, async (req, res) =>
   res.json(item);
 });
 
-// PASS — full chain validated
+// PASS: full chain validated
 router.get('/orders/:orderId/items/:itemId', authMiddleware, async (req, res) => {
   const order = await Order.findOne({ _id: req.params.orderId, userId: req.user.id });
   if (!order) return res.status(404).json({ error: 'Not found' });
@@ -263,7 +263,7 @@ const order = await prisma.order.findFirst({
   },
 });
 
-// updateMany with ownership (returns count — check it)
+// updateMany with ownership (returns count, check it)
 const result = await prisma.order.updateMany({
   where: {
     id: req.params.id,
@@ -433,9 +433,9 @@ func GetOrder(c *gin.Context) {
 
 | Severity | Condition | Example |
 |----------|-----------|---------|
-| **Critical** | Unauthenticated endpoint + no ownership check | `GET /api/orders/:id` with no auth middleware — anyone on the internet can read any order |
-| **High** | Authenticated but no ownership check at any level | `findById(req.params.id)` with auth middleware but no userId filter — any logged-in user reads any order |
-| **Medium** | Ownership checked post-fetch, not at query level | Fetch by ID, then `if (order.userId !== req.user.id) return 403` — data loaded into memory, TOCTOU risk |
+| **Critical** | Unauthenticated endpoint + no ownership check | `GET /api/orders/:id` with no auth middleware, anyone on the internet can read any order |
+| **High** | Authenticated but no ownership check at any level | `findById(req.params.id)` with auth middleware but no userId filter, any logged-in user reads any order |
+| **Medium** | Ownership checked post-fetch, not at query level | Fetch by ID, then `if (order.userId !== req.user.id) return 403`, data loaded into memory, TOCTOU risk |
 | **Low** | Admin bypass exists but weakly enforced | Admin check relies on a client-supplied claim (`req.user.isAdmin`) not verified server-side, or admin role grants blanket access without audit logging |
 
 ---
@@ -445,10 +445,10 @@ func GetOrder(c *gin.Context) {
 For every finding, produce a report block in exactly this format:
 
 ```
-BOLA Risk — OWASP API1:2023
+BOLA Risk, OWASP API1:2023
 File: <filename>:<line number>
 Pattern: <one-line description of what was detected>
-Risk: <who can access what by doing what — concrete attack scenario>
+Risk: <who can access what by doing what, concrete attack scenario>
 Severity: <Critical | High | Medium | Low>
 Fix: <exact corrected code snippet>
 ```
@@ -456,7 +456,7 @@ Fix: <exact corrected code snippet>
 ### Example Output
 
 ```
-BOLA Risk — OWASP API1:2023
+BOLA Risk, OWASP API1:2023
 File: src/controllers/orderController.js:47
 Pattern: Order.findById(req.params.id) without userId ownership filter
 Risk: Any authenticated user can read, modify, or delete any other user's order
@@ -473,13 +473,13 @@ Fix:
 When reviewing a file with **multiple findings**, produce one block per finding, ordered by severity (Critical first). At the end, provide a **summary line**:
 
 ```
-Summary: <N> BOLA findings — <n> Critical, <n> High, <n> Medium, <n> Low
+Summary: <N> BOLA findings, <n> Critical, <n> High, <n> Medium, <n> Low
 ```
 
 If the endpoint passes all six checklist items, output:
 
 ```
-BOLA Check — PASSED
+BOLA Check, PASSED
 File: <filename>:<line range>
 Ownership enforced at query level via <mechanism described>.
 

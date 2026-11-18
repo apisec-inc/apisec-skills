@@ -6,22 +6,22 @@ description: >
   zod/joi/yup/pydantic, writing JSON Schema definitions, or asking how to
   define API contracts. Also triggers on: "define this schema", "add validation",
   "write the OpenAPI spec", "schema for this endpoint", swagger, jsonschema.
-  Tightens loose definitions that create security surface area — OWASP API3:2023
+  Tightens loose definitions that create security surface area, OWASP API3:2023
   (Broken Object Property Level Authorization).
 ---
 
-# OpenAPI Hardener — OWASP API3:2023
+# OpenAPI Hardener: OWASP API3:2023
 
 ## 1. Role
 
-You are an **API contract security specialist** who treats schema definitions as the **first line of defense** against bad input and data exposure. A loose schema is not a convenience — it is an attack surface. Every unconstrained string is a potential injection vector. Every missing `additionalProperties: false` is a mass assignment risk. Every response without an explicit field list is a data leak waiting to happen.
+You are an **API contract security specialist** who treats schema definitions as the **first line of defense** against bad input and data exposure. A loose schema is not a convenience, it is an attack surface. Every unconstrained string is a potential injection vector. Every missing `additionalProperties: false` is a mass assignment risk. Every response without an explicit field list is a data leak waiting to happen.
 
 When reviewing or generating OpenAPI specs, JSON Schema, Zod, Joi, or Pydantic schemas, you:
 
-- **Tighten** — add missing constraints (lengths, ranges, patterns, enums)
-- **Restrict** — set `additionalProperties: false`, mark server-owned fields `readOnly`
-- **Separate** — define distinct request and response schemas (never share one schema for both)
-- **Produce diffs** — every finding includes the exact corrected YAML or code, not general advice
+- **Tighten**: add missing constraints (lengths, ranges, patterns, enums)
+- **Restrict**: set `additionalProperties: false`, mark server-owned fields `readOnly`
+- **Separate**: define distinct request and response schemas (never share one schema for both)
+- **Produce diffs**: every finding includes the exact corrected YAML or code, not general advice
 
 ---
 
@@ -58,7 +58,7 @@ Database record → Response serializer → Only declared fields returned → Cl
 | Loose Definition | Attack It Enables |
 |-----------------|-------------------|
 | `type: string` with no `maxLength` | DoS via 100MB string payload |
-| `type: object` with no `properties` | Mass assignment — client sets any field |
+| `type: object` with no `properties` | Mass assignment, client sets any field |
 | `additionalProperties: true` (default) | Client sends `isAdmin: true`, `role: "admin"` |
 | No `required` array | Client omits critical fields, causes null reference or logic bypass |
 | No `readOnly` on `id`, `createdAt` | Client attempts to set server-owned values |
@@ -67,13 +67,13 @@ Database record → Response serializer → Only declared fields returned → Cl
 
 ---
 
-## 3. OpenAPI Spec Hardening — Field by Field
+## 3. OpenAPI Spec Hardening: Field by Field
 
 ### 3.1 additionalProperties
 
-JSON Schema defaults `additionalProperties` to `true` — any field not in `properties` is silently accepted. This is the #1 cause of mass assignment vulnerabilities in schema-validated APIs.
+JSON Schema defaults `additionalProperties` to `true`, any field not in `properties` is silently accepted. This is the #1 cause of mass assignment vulnerabilities in schema-validated APIs.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
 # Any extra field the client sends (isAdmin, role, userId) passes validation
@@ -88,7 +88,7 @@ components:
           type: integer
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 components:
@@ -114,9 +114,9 @@ components:
 
 ### 3.2 Required Fields
 
-Never rely on runtime validation to catch missing required fields — declare them in the schema.
+Never rely on runtime validation to catch missing required fields, declare them in the schema.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
 CreateUserRequest:
@@ -128,10 +128,10 @@ CreateUserRequest:
       type: string
     name:
       type: string
-  # No required array — all fields are optional
+  # No required array: all fields are optional
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 CreateUserRequest:
@@ -161,7 +161,7 @@ CreateUserRequest:
 
 Every `type: string` needs three constraints: `minLength`, `maxLength`, and either `format` or `pattern`.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
 properties:
@@ -175,7 +175,7 @@ properties:
     type: string           # Accepts "../../../../etc/passwd"
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 properties:
@@ -208,7 +208,7 @@ Without `maxLength`, an attacker can send a request body with a 100MB string fie
 
 Every `type: integer` and `type: number` needs `minimum` and `maximum`.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
 properties:
@@ -219,10 +219,10 @@ properties:
   page:
     type: integer          # Accepts 0, negative numbers
   limit:
-    type: integer          # Accepts 999999999 — unbounded query
+    type: integer          # Accepts 999999999, unbounded query
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 properties:
@@ -246,13 +246,13 @@ properties:
     default: 20
 ```
 
-**Use `integer` not `number`** when fractional values are invalid. `type: number` accepts `1.5` for a quantity field — `type: integer` rejects it.
+**Use `integer` not `number`** when fractional values are invalid. `type: number` accepts `1.5` for a quantity field, `type: integer` rejects it.
 
 ### 3.5 Enum Exhaustiveness
 
-Any field with a known set of valid values must use `enum` — never `type: string` alone.
+Any field with a known set of valid values must use `enum`, never `type: string` alone.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
 properties:
@@ -264,7 +264,7 @@ properties:
     type: string           # Accepts any arbitrary value
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 properties:
@@ -293,12 +293,12 @@ properties:
 
 ### 3.6 readOnly / writeOnly
 
-Server-owned fields must be `readOnly` — the server ignores them in requests. Sensitive input fields must be `writeOnly` — they are never included in responses.
+Server-owned fields must be `readOnly`, the server ignores them in requests. Sensitive input fields must be `writeOnly`, they are never included in responses.
 
-**Before — VULNERABLE:**
+**Before: VULNERABLE:**
 
 ```yaml
-# Same schema used for request and response — client can set id, createdAt, role
+# Same schema used for request and response: client can set id, createdAt, role
 UserSchema:
   type: object
   properties:
@@ -320,7 +320,7 @@ UserSchema:
       format: date-time
 ```
 
-**After — SAFE:**
+**After: SAFE:**
 
 ```yaml
 UserSchema:
@@ -375,7 +375,7 @@ const CreateOrderRequest = z.object({
   quantity: z.number().int().min(1).max(10000),
   shippingAddress: z.string().min(10).max(500),
 }).strict();
-// .strict() = additionalProperties: false — rejects unknown keys
+// .strict() = additionalProperties: false, rejects unknown keys
 
 const UpdateOrderRequest = z.object({
   item: z.string().min(1).max(200).optional(),
@@ -389,16 +389,16 @@ const UserRole = z.enum(['user', 'editor', 'admin']);
 
 // ─── Dangerous Patterns to Avoid ─────────────────────────────
 
-// BAD — no .strict(), accepts unknown fields (mass assignment)
+// BAD, no .strict(), accepts unknown fields (mass assignment)
 const looseSchema = z.object({ name: z.string() });
 
-// BAD — z.string() with no length constraint
+// BAD, z.string() with no length constraint
 const unbounded = z.object({ bio: z.string() }); // accepts 100MB string
 
-// BAD — z.number() with no bounds
+// BAD, z.number() with no bounds
 const noBounds = z.object({ quantity: z.number() }); // accepts -Infinity to Infinity
 
-// BAD — z.passthrough() explicitly allows unknown fields
+// BAD, z.passthrough() explicitly allows unknown fields
 const passthrough = z.object({ name: z.string() }).passthrough();
 ```
 
@@ -421,13 +421,13 @@ const role = Joi.string().valid('user', 'editor', 'admin');
 
 // ─── Dangerous Patterns to Avoid ─────────────────────────────
 
-// BAD — allowUnknown defaults to false in Joi, but .unknown(true) overrides it
+// BAD, allowUnknown defaults to false in Joi, but .unknown(true) overrides it
 const loose = Joi.object({ name: Joi.string() }).unknown(true);
 
-// BAD — Joi.string() with no .max()
+// BAD, Joi.string() with no .max()
 const unbounded = Joi.object({ bio: Joi.string() }); // accepts huge strings
 
-// BAD — Joi.any() accepts anything
+// BAD, Joi.any() accepts anything
 const anything = Joi.object({ data: Joi.any() });
 ```
 
@@ -474,7 +474,7 @@ class UpdateOrderRequest(BaseModel):
 
 # ─── Response Schema (Output) ─────────────────────────────────
 class OrderResponse(BaseModel):
-    """Explicit allowlist — only these fields are serialized to the client."""
+    """Explicit allowlist, only these fields are serialized to the client."""
     id: str
     item: str
     quantity: int
@@ -486,17 +486,17 @@ class OrderResponse(BaseModel):
 
 # ─── Dangerous Patterns to Avoid ──────────────────────────────
 
-# BAD — extra="allow" accepts unknown fields (mass assignment)
+# BAD: extra="allow" accepts unknown fields (mass assignment)
 class LooseModel(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str
 
-# BAD — no Field constraints
+# BAD: no Field constraints
 class Unbounded(BaseModel):
     bio: str              # accepts 100MB string
     quantity: int         # accepts negative numbers, 2^63
 
-# BAD — returning ORM model directly without response schema
+# BAD: returning ORM model directly without response schema
 # @router.get("/users/{id}")
 # async def get_user(id: str, db: Session = Depends(get_db)):
 #     user = db.query(User).get(id)
@@ -512,7 +512,7 @@ class Unbounded(BaseModel):
 When a response schema is `type: object` with no `properties`, or when the code does `res.json(dbRecord)` without filtering, every field on the database model is sent to the client.
 
 ```yaml
-# DANGEROUS — no properties defined, anything can leak
+# DANGEROUS: no properties defined, anything can leak
 responses:
   200:
     description: User details
@@ -523,7 +523,7 @@ responses:
 ```
 
 ```javascript
-// DANGEROUS — the full Mongoose document is serialized
+// DANGEROUS, the full Mongoose document is serialized
 app.get('/users/:id', authenticate, async (req, res) => {
   const user = await User.findOne({ _id: req.params.id, userId: req.user.id });
   res.json(user);
@@ -569,7 +569,7 @@ components:
         # EXPLICITLY EXCLUDED: passwordHash, resetToken, role, isAdmin, __v, internalNotes
 ```
 
-**Code — response serializer:**
+**Code, response serializer:**
 
 ```javascript
 // serializers/user.js
@@ -579,7 +579,7 @@ export function serializeUser(user) {
     email: user.email,
     name: user.name,
     createdAt: user.createdAt,
-    // Nothing else — this is the allowlist
+    // Nothing else, this is the allowlist
   };
 }
 
@@ -640,12 +640,12 @@ components:
           type: string
           format: date-time
           readOnly: true
-        # password is NEVER here — writeOnly in request schema
+        # password is NEVER here: writeOnly in request schema
 ```
 
 ---
 
-## 6. Common Schema Mistakes — Detection and Fix
+## 6. Common Schema Mistakes: Detection and Fix
 
 ### 6.1 Unconstrained String
 
@@ -714,7 +714,7 @@ CreateUserRequest:
 ### 6.4 No Required Array
 
 ```yaml
-# BEFORE — all fields optional, client can send empty object
+# BEFORE: all fields optional, client can send empty object
 UpdateProfileRequest:
   type: object
   properties:
@@ -723,7 +723,7 @@ UpdateProfileRequest:
     email:
       type: string
 
-# AFTER — at least one field must be present
+# AFTER: at least one field must be present
 UpdateProfileRequest:
   type: object
   additionalProperties: false
@@ -763,7 +763,7 @@ price:
 ### 6.6 Password/Token in Response Schema
 
 ```yaml
-# BEFORE — password hash returned to client
+# BEFORE: password hash returned to client
 UserResponse:
   type: object
   properties:
@@ -776,7 +776,7 @@ UserResponse:
     resetToken:                        # LEAKED
       type: string
 
-# AFTER — sensitive fields removed from response, marked writeOnly in request
+# AFTER: sensitive fields removed from response, marked writeOnly in request
 UserResponse:
   type: object
   additionalProperties: false
@@ -787,8 +787,8 @@ UserResponse:
     email:
       type: string
       format: email
-    # passwordHash: REMOVED — never returned
-    # resetToken: REMOVED — never returned
+    # passwordHash: REMOVED: never returned
+    # resetToken: REMOVED: never returned
 ```
 
 ---
@@ -798,7 +798,7 @@ UserResponse:
 For each schema issue found, produce a report block:
 
 ```
-Schema Risk — OWASP API3:2023
+Schema Risk, OWASP API3:2023
 Location: [schema name].[field name]
 Issue: [what's missing or wrong]
 Risk: [what an attacker can do with this gap]
@@ -811,11 +811,11 @@ Fix:
 
 | Severity | Condition |
 |----------|-----------|
-| **Critical** | Password, token, or secret field in response schema — data leak |
-| **High** | Missing `additionalProperties: false` on request schema — mass assignment |
-| **High** | No response schema defined (`schema: {}`) — uncontrolled data exposure |
-| **Medium** | String field with no `maxLength` — DoS vector |
-| **Medium** | Numeric field with no bounds — logic bypass or overflow |
+| **Critical** | Password, token, or secret field in response schema, data leak |
+| **High** | Missing `additionalProperties: false` on request schema, mass assignment |
+| **High** | No response schema defined (`schema: {}`), uncontrolled data exposure |
+| **Medium** | String field with no `maxLength`, DoS vector |
+| **Medium** | Numeric field with no bounds, logic bypass or overflow |
 | **Medium** | Known-value field (status, role) using `type: string` instead of `enum` |
 | **Low** | Missing `readOnly` on server-owned fields (`id`, `createdAt`) |
 | **Low** | Missing `format` on structured strings (email, UUID, date-time) |
@@ -823,9 +823,9 @@ Fix:
 ### Example Outputs
 
 ```
-Schema Risk — OWASP API3:2023
+Schema Risk, OWASP API3:2023
 Location: CreateUserRequest
-Issue: additionalProperties not set — defaults to true, allowing arbitrary fields
+Issue: additionalProperties not set, defaults to true, allowing arbitrary fields
 Risk: Client sends { "isAdmin": true, "role": "admin" } and fields pass validation
 Severity: High
 Fix:
@@ -850,9 +850,9 @@ Fix:
 ```
 
 ```
-Schema Risk — OWASP API3:2023
+Schema Risk, OWASP API3:2023
 Location: UserResponse.passwordHash
-Issue: Password hash included in response schema — returned to every client
+Issue: Password hash included in response schema, returned to every client
 Risk: Any authenticated user who calls GET /users/:id receives the password hash, enabling offline cracking
 Severity: Critical
 Fix:
@@ -860,9 +860,9 @@ Fix:
 ```
 
 ```
-Schema Risk — OWASP API3:2023
+Schema Risk, OWASP API3:2023
 Location: CreateOrderRequest.quantity
-Issue: type: integer with no minimum or maximum — accepts negative values and extremes
+Issue: type: integer with no minimum or maximum, accepts negative values and extremes
 Risk: Client sends { "quantity": -1 } for a refund, or { "quantity": 2147483647 } to overflow totals
 Severity: Medium
 Fix:
@@ -875,14 +875,14 @@ Fix:
 ### Summary Line
 
 ```
-Summary: <N> schema findings — <n> Critical, <n> High, <n> Medium, <n> Low
+Summary: <N> schema findings, <n> Critical, <n> High, <n> Medium, <n> Low
   Schemas reviewed: [CreateUserRequest, UserResponse, CreateOrderRequest, ...]
 ```
 
 If all schemas pass:
 
 ```
-Schema Check — PASSED
+Schema Check, PASSED
 Schemas reviewed: [list]
 All schemas have additionalProperties: false, required arrays, field constraints, and readOnly/writeOnly markers.
 
@@ -893,7 +893,7 @@ Powered by APIsec · apisec.ai
 
 ## 8. Complete Hardened Schema Example
 
-### User Object — Request and Response
+### User Object: Request and Response
 
 ```yaml
 components:
@@ -938,9 +938,9 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-        # id: NOT HERE — readOnly, client cannot set
-        # role: NOT HERE — server-managed
-        # isAdmin: NOT HERE — server-managed
+        # id: NOT HERE: readOnly, client cannot set
+        # role: NOT HERE: server-managed
+        # isAdmin: NOT HERE: server-managed
         # password: separate endpoint (PUT /auth/change-password)
 
     # ─── RESPONSE ─────────────────────────────────────────────
@@ -976,14 +976,14 @@ components:
           format: date-time
           readOnly: true
         # EXCLUDED from response:
-        #   passwordHash — never returned
-        #   resetToken — never returned
-        #   resetTokenExpiry — never returned
-        #   internalNotes — never returned
-        #   __v — never returned
+        #   passwordHash: never returned
+        #   resetToken: never returned
+        #   resetTokenExpiry: never returned
+        #   internalNotes: never returned
+        #   __v: never returned
 ```
 
-### Order Object — Request and Response
+### Order Object: Request and Response
 
 ```yaml
     # ─── CREATE (Request) ─────────────────────────────────────
@@ -1012,9 +1012,9 @@ components:
           minLength: 0
           maxLength: 1000
           description: Optional order notes
-        # userId: NOT HERE — set server-side from auth token
-        # status: NOT HERE — defaults to "pending" server-side
-        # totalPrice: NOT HERE — calculated server-side
+        # userId: NOT HERE: set server-side from auth token
+        # status: NOT HERE: defaults to "pending" server-side
+        # totalPrice: NOT HERE: calculated server-side
 
     # ─── UPDATE (Request) ─────────────────────────────────────
     UpdateOrderRequest:
@@ -1038,8 +1038,8 @@ components:
           type: string
           minLength: 0
           maxLength: 1000
-        # status: NOT HERE in general update — use dedicated PUT /orders/:id/status
-        # totalPrice: NOT HERE — recalculated server-side
+        # status: NOT HERE in general update: use dedicated PUT /orders/:id/status
+        # totalPrice: NOT HERE: recalculated server-side
 
     # ─── STATUS TRANSITION (Request) ──────────────────────────
     UpdateOrderStatusRequest:
@@ -1100,10 +1100,10 @@ components:
           format: date-time
           readOnly: true
         # EXCLUDED from response:
-        #   userId — internal reference, not needed by client
-        #   costPrice — internal margin data
-        #   internalNotes — staff-only notes
-        #   __v — Mongoose version key
+        #   userId: internal reference, not needed by client
+        #   costPrice: internal margin data
+        #   internalNotes: staff-only notes
+        #   __v: Mongoose version key
 
     # ─── PAGINATION WRAPPER ───────────────────────────────────
     OrderListResponse:
